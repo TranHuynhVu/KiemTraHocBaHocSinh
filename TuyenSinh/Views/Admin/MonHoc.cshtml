@@ -1,0 +1,148 @@
+@model IEnumerable<TuyenSinh.Models.MonHoc>
+@{
+    ViewData["Title"] = "Quản lý môn học";
+    ViewData["PageTitle"] = "Quản lý môn học";
+    Layout = "_AdminLayout";
+}
+
+<div class="row">
+    <!-- Form Thêm môn học -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+            <div class="card-header bg-white py-3 px-4">
+                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Thêm môn học mới</h5>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Admin" asp-action="CreateMonHoc" method="post">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Tên môn học</label>
+                        <input type="text" name="tenMonHoc" class="form-control" placeholder="Ví dụ: Vật lý" required />
+                        <div class="form-text text-muted small">Tên hiển thị chính thức của môn học.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Trường dữ liệu trong Excel</label>
+                        <input type="text" name="fieldName" class="form-control" placeholder="Ví dụ: VatLy" required />
+                        <div class="form-text text-muted small">Từ khóa prefix của môn học trong Excel (vd: VatLyCN -> điền VatLy).</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">
+                        <i class="fa-solid fa-plus me-1"></i> Thêm môn học
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách môn học -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Danh sách môn học</h5>
+                <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Count() Môn học</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border-collapse: collapse;">
+                        <thead class="table-light text-secondary font-weight-600" style="font-size: 0.85rem;">
+                            <tr>
+                                <th class="ps-4 py-3" style="width: 80px;">ID</th>
+                                <th class="py-3">Tên môn học</th>
+                                <th class="py-3">Ánh xạ Excel</th>
+                                <th class="pe-4 py-3 text-end" style="width: 200px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-folder-open fa-2x mb-3 d-block text-secondary opacity-50"></i>
+                                        Chưa có môn học nào được tạo.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="ps-4 font-weight-600 text-muted">@item.Id</td>
+                                        <td class="font-weight-600" style="color: #1c1c1e;">@item.TenMonHoc</td>
+                                        <td>
+                                            <code>@item.FieldName</code>
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <button type="button" class="btn btn-outline-primary btn-sm me-2" 
+                                                    data-bs-toggle="modal" data-bs-target="#editModal-@item.Id" style="border-radius: 5px;">
+                                                <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id" style="border-radius: 5px;">
+                                                <i class="fa-solid fa-trash"></i> Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal Sửa môn học -->
+                                    <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700" style="color: #1c1c1e;">Chỉnh sửa môn học</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="Admin" asp-action="EditMonHoc" method="post">
+                                                    <div class="modal-body p-4">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500">Tên môn học</label>
+                                                            <input type="text" name="tenMonHoc" value="@item.TenMonHoc" class="form-control" required />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500">Trường dữ liệu trong Excel</label>
+                                                            <input type="text" name="fieldName" value="@item.FieldName" class="form-control" required />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
+                                                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2" style="border-radius: 5px;">Cập nhật</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Xóa môn học -->
+                                    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700" style="color: #d9534f;">Xác nhận xóa môn học</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="Admin" asp-action="DeleteMonHoc" method="post">
+                                                    <div class="modal-body p-4 text-center">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
+                                                        <p class="mb-1" style="font-weight: 600; font-size: 1.1rem; color: #1c1c1e;">Bạn có chắc chắn muốn xóa môn học này?</p>
+                                                        <p class="text-danger small mb-0">Hành động này không thể hoàn tác và có thể ảnh hưởng đến các tổ hợp chứa môn học này!</p>
+                                                        <div class="bg-light p-3 rounded-3 mt-3 font-weight-600">
+                                                            @item.TenMonHoc (@item.FieldName)
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2" style="border-radius: 5px;">Xóa</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

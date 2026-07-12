@@ -1,0 +1,184 @@
+@{
+    ViewData["Title"] = "Xem trước & Kiểm tra học bạ";
+    ViewData["PageTitle"] = "Bản xem trước dữ liệu và đối chiếu học bạ";
+    Layout = "_AdminLayout";
+    var excelId = ViewBag.ExcelId as string;
+}
+
+
+
+<!-- Khối xem trước học bạ dạng Card có card-header hiển thị thanh công cụ -->
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+        <h5 class="m-0 font-weight-700 text-dark" style="font-size: 1.05rem;">
+            <i class="fa-solid fa-table text-primary me-2"></i>Chi tiết bản xem trước học bạ
+        </h5>
+        <div class="d-flex gap-2">
+            <a href="/HocBa" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Chọn tệp khác
+            </a>
+            <button id="btnRunCheck" class="btn btn-check-start btn-sm">
+                <i class="fa-solid fa-circle-check me-1"></i> Bắt đầu kiểm tra
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">Bảng hiển thị đầy đủ 79 cột dữ liệu và tất cả các dòng của tệp Excel.</p>
+        <table id="rawPreviewTable" class="table table-striped table-bordered w-100">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Số ĐDCN (CCCD)</th>
+                    <th>Họ và tên</th>
+                    <th>Ngày sinh</th>
+                    <th>Giới tính</th>
+                    <th>Lớp</th>
+                    <th>CT Học</th>
+                    <th>ĐTB Năm</th>
+                    <th>ĐTK HKI</th>
+                    <th>ĐTK HKII</th>
+                    <th>ĐTK CN</th>
+                    <th>HL HKI</th>
+                    <th>HL HKII</th>
+                    <th>HL CN</th>
+                    <th>HK HKI</th>
+                    <th>HK HKII</th>
+                    <th>HK CN</th>
+                    <th>KQHT HKI</th>
+                    <th>KQHT HKII</th>
+                    <th>KQHT CN</th>
+                    <th>KQRL HKI</th>
+                    <th>KQRL HKII</th>
+                    <th>KQRL CN</th>
+                    <th>Toán HKI</th>
+                    <th>Toán HKII</th>
+                    <th>Toán CN</th>
+                    <th>Văn HKI</th>
+                    <th>Văn HKII</th>
+                    <th>Văn CN</th>
+                    <th>Vật lí HKI</th>
+                    <th>Vật lí HKII</th>
+                    <th>Vật lí CN</th>
+                    <th>Hóa học HKI</th>
+                    <th>Hóa học HKII</th>
+                    <th>Hóa học CN</th>
+                    <th>Sinh học HKI</th>
+                    <th>Sinh học HKII</th>
+                    <th>Sinh học CN</th>
+                    <th>Lịch sử HKI</th>
+                    <th>Lịch sử HKII</th>
+                    <th>Lịch sử CN</th>
+                    <th>Địa lí HKI</th>
+                    <th>Địa lí HKII</th>
+                    <th>Địa lí CN</th>
+                    <th>GDCD HKI</th>
+                    <th>GDCD HKII</th>
+                    <th>GDCD CN</th>
+                    <th>KTPL HKI</th>
+                    <th>KTPL HKII</th>
+                    <th>KTPL CN</th>
+                    <th>Tin học HKI</th>
+                    <th>Tin học HKII</th>
+                    <th>Tin học CN</th>
+                    <th>CNCN HKI</th>
+                    <th>CNCN HKII</th>
+                    <th>CNCN CN</th>
+                    <th>CNNN HKI</th>
+                    <th>CNNN HKII</th>
+                    <th>CNNN CN</th>
+                    <th>Ngoại ngữ HKI</th>
+                    <th>Ngoại ngữ HKII</th>
+                    <th>Ngoại ngữ CN</th>
+                    <th>Môn Ngoại ngữ</th>
+                    <th>TCSN HKI</th>
+                    <th>TCSN HKII</th>
+                    <th>TCSN CN</th>
+                    <th>QPAN HKI</th>
+                    <th>QPAN HKII</th>
+                    <th>QPAN CN</th>
+                    <th>Tiếng Dân Tộc HKI</th>
+                    <th>Tiếng Dân Tộc HKII</th>
+                    <th>Tiếng Dân Tộc CN</th>
+                    <th>Ngoại ngữ 2 HKI</th>
+                    <th>Ngoại ngữ 2 HKII</th>
+                    <th>Ngoại ngữ 2 CN</th>
+                    <th>Môn Ngoại ngữ 2</th>
+                    <th>Toán Pháp HKI</th>
+                    <th>Toán Pháp HKII</th>
+                    <th>Toán Pháp CN</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Khối kết quả (Ẩn mặc định cho đến khi click đối chiếu) -->
+<div id="resultsWrapper" class="d-none mt-4">
+    <div class="row">
+        <!-- 1. Thí sinh thiếu năm học -->
+        <div class="col-xl-5 mb-4">
+            <div class="card border-0 shadow-sm header-left-table h-100 p-3">
+                <div class="card-header bg-white py-3 border-0 d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0 font-weight-700" style="font-size: 0.9rem; color: #1c1c1e;">
+                        <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>1. Thí sinh thiếu năm học (10, 11, 12)
+                    </h6>
+                    <span id="missingGradesBadge" class="badge bg-warning text-dark px-2 py-1 font-weight-600" style="font-size: 0.7rem; border-radius: 3px;">0 bản ghi lỗi</span>
+                </div>
+                <div class="card-body p-0 mt-2">
+                    <table id="missingGradesTable" class="table table-striped table-bordered w-100">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Số ĐDCN (CCCD)</th>
+                                <th>Họ và tên</th>
+                                <th>Năm hiện có</th>
+                                <th>Năm thiếu</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Thí sinh thiếu điểm theo Tổ hợp môn -->
+        <div class="col-xl-7 mb-4">
+            <div class="card border-0 shadow-sm header-right-table h-100 p-3">
+                <div class="card-header bg-white py-3 border-0 d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0 font-weight-700" style="font-size: 0.9rem; color: #1c1c1e;">
+                        <i class="fa-solid fa-circle-exclamation text-danger me-2"></i>2. Thí sinh thiếu điểm theo Tổ hợp môn
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="missingScoresBadge" class="badge bg-danger text-white px-2 py-1 font-weight-600" style="font-size: 0.7rem; border-radius: 3px;">0 bản ghi lỗi</span>
+                        <button type="button" id="btnExportMissingScores" class="btn btn-success btn-sm d-none" style="font-size: 0.75rem; border-radius: 4px; padding: 4px 8px; font-weight: 600;">
+                            <i class="fa-solid fa-file-excel"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0 mt-2">
+                    <table id="missingScoresTable" class="table table-striped table-bordered w-100">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Số ĐDCN (CCCD)</th>
+                                <th>Họ và tên</th>
+                                <th>Năm lỗi</th>
+                                <th>Tổ hợp</th>
+                                <th>Môn bị thiếu điểm</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const excelId = '@excelId';
+    </script>
+    <script src="~/js/hocba/hocbapreview.js" asp-append-version="true"></script>
+}

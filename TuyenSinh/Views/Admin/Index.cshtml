@@ -1,0 +1,196 @@
+@{
+    ViewData["Title"] = "Tổng quan";
+    ViewData["PageTitle"] = "Bảng điều khiển Tổng quan";
+    Layout = "_AdminLayout";
+}
+
+<!-- Minimalist & Color-coded Professional Styles -->
+<style>
+    .func-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 24px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 1.25rem;
+    }
+
+    .badge-custom {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .func-btn {
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        background-color: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    /* Card 1: Blue Theme */
+    .func-card-blue:hover {
+        border-color: #0284c7;
+        box-shadow: 0 6px 15px rgba(2, 132, 199, 0.06);
+    }
+    .func-card-blue .icon-box {
+        background-color: #e0f2fe;
+        color: #0284c7;
+    }
+    .func-card-blue .badge-custom {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    .func-card-blue:hover .func-btn {
+        background-color: #0284c7;
+        color: #ffffff;
+        border-color: #0284c7;
+    }
+
+    /* Card 2: Purple Theme */
+    .func-card-purple:hover {
+        border-color: #7c3aed;
+        box-shadow: 0 6px 15px rgba(124, 58, 237, 0.06);
+    }
+    .func-card-purple .icon-box {
+        background-color: #f3e8ff;
+        color: #7c3aed;
+    }
+    .func-card-purple .badge-custom {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+    .func-card-purple:hover .func-btn {
+        background-color: #7c3aed;
+        color: #ffffff;
+        border-color: #7c3aed;
+    }
+
+    /* Card 3: Green Theme */
+    .func-card-green:hover {
+        border-color: #059669;
+        box-shadow: 0 6px 15px rgba(5, 150, 105, 0.06);
+    }
+    .func-card-green .icon-box {
+        background-color: #d1fae5;
+        color: #059669;
+    }
+    .func-card-green .badge-custom {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .func-card-green:hover .func-btn {
+        background-color: #059669;
+        color: #ffffff;
+        border-color: #059669;
+    }
+</style>
+
+<div class="py-3">
+    <!-- Header Page -->
+    <div class="mb-4 pb-3 border-bottom">
+        <h4 class="mb-1" style="font-weight: 700; color: #0f172a;">Hệ thống Quản lý Tuyển sinh</h4>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">Chọn các phân hệ công việc dưới đây để quản lý và vận hành quy trình đối chiếu hồ sơ.</p>
+    </div>
+
+    <!-- Cards Row -->
+    <div class="row g-4">
+        <!-- Card 1: Môn học (Blue) -->
+        <div class="col-md-4">
+            <div class="func-card func-card-blue">
+                <div>
+                    <div class="icon-box">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Quản lý môn học</h5>
+                    <p class="text-muted small mb-4" style="line-height: 1.5;">Khai báo danh mục môn học trong hệ thống và định nghĩa tên cột ánh xạ tương ứng trong tệp Excel học bạ của thí sinh.</p>
+                </div>
+                <div>
+                    <div class="mb-3">
+                        <span class="badge-custom">
+                            @ViewBag.CountSubjects môn học cấu hình
+                        </span>
+                    </div>
+                    <a href="/Admin/MonHoc" class="func-btn">
+                        <span>Thiết lập môn học</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Tổ hợp môn (Purple) -->
+        <div class="col-md-4">
+            <div class="func-card func-card-purple">
+                <div>
+                    <div class="icon-box">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Tổ hợp xét tuyển</h5>
+                    <p class="text-muted small mb-4" style="line-height: 1.5;">Tạo mới, chỉnh sửa các tổ hợp xét tuyển đại học (như A00, A01, D01...) và liên kết các môn học cấu thành tương ứng.</p>
+                </div>
+                <div>
+                    <div class="mb-3">
+                        <span class="badge-custom">
+                            @ViewBag.CountCombinations tổ hợp hoạt động
+                        </span>
+                    </div>
+                    <a href="/Admin/ToHopMon" class="func-btn">
+                        <span>Thiết lập tổ hợp</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Kiểm tra học bạ (Green) -->
+        <div class="col-md-4">
+            <div class="func-card func-card-green">
+                <div>
+                    <div class="icon-box">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Kiểm tra học bạ</h5>
+                    <p class="text-muted small mb-4" style="line-height: 1.5;">Tải tệp danh sách học bạ từ tệp Excel lên. Hệ thống tự động phân tích dữ liệu điểm số và đối chiếu tính hợp lệ của hồ sơ.</p>
+                </div>
+                <div>
+                    <div class="mb-3">
+                        <span class="badge-custom">
+                            Phân tích tệp Excel tự động
+                        </span>
+                    </div>
+                    <a href="/HocBa" class="func-btn">
+                        <span>Bắt đầu đối chiếu</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

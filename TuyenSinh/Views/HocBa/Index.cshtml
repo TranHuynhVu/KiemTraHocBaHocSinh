@@ -1,0 +1,200 @@
+@{
+    ViewData["Title"] = "Kiểm tra học bạ";
+    ViewData["PageTitle"] = "Kiểm tra logic học bạ thí sinh";
+    Layout = "_AdminLayout";
+}
+
+<!-- Custom Styles for Upload Page -->
+<style>
+    .upload-container {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .custom-card {
+        border-radius: 12px;
+        border: 1px solid #e5e5ea;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+    }
+
+    .custom-card .card-header {
+        background-color: #fafafa !important;
+        border-bottom: 1px solid #e5e5ea !important;
+        padding: 18px 24px !important;
+    }
+
+    .custom-card .card-header h5 {
+        color: var(--text-main);
+    }
+
+    .custom-card .card-body {
+        padding: 32px !important;
+    }
+
+    .drop-zone-wrapper {
+        border: 2px dashed #d1d1d6;
+        border-radius: 10px;
+        background-color: #fafafa;
+        padding: 40px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        position: relative;
+    }
+
+    .drop-zone-wrapper:hover, .drop-zone-wrapper.dragover {
+        border-color: var(--primary-color);
+        background-color: #f5fafd;
+    }
+
+    .upload-icon {
+        width: 56px;
+        height: 56px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .drop-zone-wrapper:hover .upload-icon {
+        transform: scale(1.08);
+    }
+
+    .file-input-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    .select-file-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        background-color: #ffffff;
+        color: var(--primary-color);
+        border: 1px solid #d1d1d6;
+        margin-top: 12px;
+        transition: all 0.2s;
+    }
+
+    .drop-zone-wrapper:hover .select-file-btn {
+        border-color: var(--primary-color);
+        background-color: #f5fafd;
+    }
+
+    .btn-submit-upload {
+        padding: 12px 30px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        border-radius: 8px;
+        background-color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        color: white;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0, 122, 255, 0.1);
+    }
+
+    .btn-submit-upload:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(0, 122, 255, 0.2);
+    }
+
+    .btn-submit-upload:disabled {
+        background-color: #aeaeae;
+        border-color: #aeaeae;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .file-info-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-top: 12px;
+        border: 1px solid rgba(0, 122, 255, 0.15);
+    }
+</style>
+
+<div class="upload-container py-3">
+    <!-- Breadcrumb / Header -->
+    <div class="mb-4">
+        <h4 class="mb-1" style="font-weight: 700; color: var(--text-main);">Kiểm tra logic học bạ thí sinh</h4>
+        <p class="text-muted small mb-0">Hệ thống đối chiếu dữ liệu điểm số các năm học THPT (Lớp 10, 11, 12) theo tổ hợp môn cấu hình.</p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card custom-card">
+        <div class="card-header">
+            <h5 class="m-0" style="font-weight: 700; font-size: 1rem;">
+                <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i>Nạp dữ liệu học bạ tuyển sinh
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="drop-zone-wrapper" id="dropZone">
+                    <div class="upload-icon">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    
+                    <h5 class="text-dark mb-2" style="font-weight: 700; font-size: 1.1rem; color: var(--text-main) !important;">Tải tệp tin học bạ lên hệ thống</h5>
+                    <p class="text-muted small mb-3">Kéo và thả tệp tin Excel/CSV của bạn vào đây, hoặc click để chọn tệp</p>
+                    
+                    <!-- Hidden input to make UI cleaner -->
+                    <input type="file" id="excelFile" name="file" class="file-input-hidden" accept=".xlsx, .xls, .csv" required />
+                    
+                    <div id="selectFileBtnWrapper">
+                        <button type="button" class="select-file-btn" id="btnSelectFile">
+                            <i class="fa-solid fa-folder-open"></i> Chọn tệp từ máy tính
+                        </button>
+                    </div>
+
+                    <!-- Selected file name display -->
+                    <div id="fileInfoWrapper" class="d-none">
+                        <div class="file-info-badge">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span id="selectedFileName">Tên file ở đây</span>
+                            <i class="fa-solid fa-circle-check text-success ms-1"></i>
+                        </div>
+                    </div>
+
+                    <div class="text-muted small mt-4">Hỗ trợ các định dạng: <strong>.xlsx, .xls, .csv</strong> (Tối đa: 20MB)</div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" id="btnUpload" class="btn btn-submit-upload" disabled>
+                        <i class="fa-solid fa-cloud-arrow-up me-2"></i> Tiếp tục và Xem trước dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/hocba/hocbaindex.js" asp-append-version="true"></script>
+}

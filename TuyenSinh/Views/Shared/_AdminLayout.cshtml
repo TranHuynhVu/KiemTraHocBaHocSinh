@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản Lý Tuyển Sinh Admin</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Global Admin CSS -->
+    <link rel="stylesheet" href="~/css/admin/adminlayout.css" asp-append-version="true" />
+    <!-- CDN CSS (SweetAlert2 & DataTables Bootstrap 5) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <div id="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>UTE Tuyển Sinh</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="/Admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Tổng quan</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="/Admin/MonHoc" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "MonHoc" ? "active" : "")">
+                    <i class="fa-solid fa-book"></i>
+                    <span>Quản lý môn học</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="/Admin/ToHopMon" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "ToHopMon" ? "active" : "")">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Quản lý tổ hợp môn</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="/Admin/Nganh" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Nganh" ? "active" : "")">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Quản lý ngành học</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="/HocBa" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HocBa" ? "active" : "")">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Kiểm tra học bạ</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" title="@User.Identity?.Name">@User.Identity?.Name</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+            <a href="/Account/LogoutGet" class="btn btn-outline-danger w-100 btn-sm" style="border-radius: 5px;">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div id="content-wrapper">
+        <!-- Main Content Area -->
+        <div id="main-content">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 5px; background-color: #e3fbeb; color: #155724;">
+                    <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 5px; background-color: #fdf2f2; color: #721c24;">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i> @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap Bundle JS -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CDN Scripts (DataTables & SweetAlert2) -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

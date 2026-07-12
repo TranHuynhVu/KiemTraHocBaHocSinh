@@ -1,0 +1,202 @@
+@model IEnumerable<TuyenSinh.Models.ToHopMon>
+@{
+    ViewData["Title"] = "Quản lý tổ hợp môn";
+    ViewData["PageTitle"] = "Quản lý tổ hợp môn xét tuyển";
+    Layout = "_AdminLayout";
+    var subjects = ViewBag.Subjects as IEnumerable<TuyenSinh.Models.MonHoc> ?? new List<TuyenSinh.Models.MonHoc>();
+}
+
+<div class="row">
+    <!-- Form Thêm tổ hợp môn -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+            <div class="card-header bg-white py-3 px-4">
+                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Thêm tổ hợp mới</h5>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Admin" asp-action="CreateToHopMon" method="post">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Mã tổ hợp</label>
+                        <input type="text" name="maToHop" class="form-control" placeholder="Ví dụ: A00" style="text-transform: uppercase;" required />
+                        <div class="form-text text-muted small">Mã nhận diện viết hoa (e.g. A00, D01, X02).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Tên tổ hợp</label>
+                        <input type="text" name="tenToHop" class="form-control" placeholder="Ví dụ: Toán, Vật lý, Hóa học" required />
+                        <div class="form-text text-muted small">Tên đầy đủ mô tả tổ hợp xét tuyển.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label font-weight-500 d-block">Danh sách môn học cấu thành</label>
+                        <div class="border p-3 bg-light" style="max-height: 220px; overflow-y: auto; border-radius: 5px;">
+                            @if (!subjects.Any())
+                            {
+                                <span class="text-muted small">Chưa có môn học nào để chọn. Vui lòng tạo môn học trước.</span>
+                            }
+                            else
+                            {
+                                foreach (var sub in subjects)
+                                {
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="selectedSubjectIds" value="@sub.Id" id="new_sub_@sub.Id">
+                                        <label class="form-check-label font-weight-500 text-dark small" for="new_sub_@sub.Id">
+                                            @sub.TenMonHoc <code>(@sub.FieldName)</code>
+                                        </label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <div class="form-text text-muted small">Chọn các môn học bắt buộc của tổ hợp này.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" @(subjects.Any() ? "" : "disabled")>
+                        <i class="fa-solid fa-plus me-1"></i> Thêm tổ hợp môn
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách tổ hợp môn -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Danh sách tổ hợp</h5>
+                <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Count() Tổ hợp</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border-collapse: collapse;">
+                        <thead class="table-light text-secondary font-weight-600" style="font-size: 0.85rem;">
+                            <tr>
+                                <th class="ps-4 py-3" style="width: 120px;">Mã tổ hợp</th>
+                                <th class="py-3">Tên tổ hợp</th>
+                                <th class="py-3">Các môn học thành phần</th>
+                                <th class="pe-4 py-3 text-end" style="width: 200px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-folder-open fa-2x mb-3 d-block text-secondary opacity-50"></i>
+                                        Chưa có tổ hợp môn nào được cấu hình.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <span class="badge bg-dark px-3 py-2" style="font-size: 0.85rem; font-weight: 600; border-radius: 3px;">
+                                                @item.MaToHop
+                                            </span>
+                                        </td>
+                                        <td class="font-weight-600" style="color: #1c1c1e;">@item.TenToHop</td>
+                                        <td>
+                                            @if (item.MonHocs != null && item.MonHocs.Count > 0)
+                                            {
+                                                foreach (var sub in item.MonHocs)
+                                                {
+                                                    <span class="badge bg-light text-dark border me-1 px-2 py-1 mb-1" style="font-weight: 500; font-size: 0.75rem; border-radius: 3px;">
+                                                        @sub.TenMonHoc
+                                                    </span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger small">Không có môn học!</span>
+                                            }
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <button type="button" class="btn btn-outline-primary btn-sm me-2" 
+                                                    data-bs-toggle="modal" data-bs-target="#editModal-@item.Id" style="border-radius: 5px;">
+                                                <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id" style="border-radius: 5px;">
+                                                <i class="fa-solid fa-trash"></i> Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal Sửa tổ hợp môn -->
+                                    <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700" style="color: #1c1c1e;">Chỉnh sửa tổ hợp</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="Admin" asp-action="EditToHopMon" method="post">
+                                                    <div class="modal-body p-4">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500">Mã tổ hợp</label>
+                                                            <input type="text" name="maToHop" value="@item.MaToHop" class="form-control" style="text-transform: uppercase;" required />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500">Tên tổ hợp</label>
+                                                            <input type="text" name="tenToHop" value="@item.TenToHop" class="form-control" required />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500 d-block">Danh sách môn học cấu thành</label>
+                                                            <div class="border p-3 bg-light" style="max-height: 220px; overflow-y: auto; border-radius: 5px;">
+                                                                @foreach (var sub in subjects)
+                                                                {
+                                                                    bool isSelected = item.MonHocs != null && item.MonHocs.Any(m => m.Id == sub.Id);
+                                                                    <div class="form-check mb-2">
+                                                                        <input class="form-check-input" type="checkbox" name="selectedSubjectIds" value="@sub.Id" id="edit_sub_@item.Id-@sub.Id" @(isSelected ? "checked" : "")>
+                                                                        <label class="form-check-label font-weight-500 text-dark small" for="edit_sub_@item.Id-@sub.Id">
+                                                                            @sub.TenMonHoc <code>(@sub.FieldName)</code>
+                                                                        </label>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
+                                                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2" style="border-radius: 5px;">Cập nhật</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Xóa tổ hợp môn -->
+                                    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700" style="color: #d9534f;">Xác nhận xóa tổ hợp</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="Admin" asp-action="DeleteToHopMon" method="post">
+                                                    <div class="modal-body p-4 text-center">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
+                                                        <p class="mb-1" style="font-weight: 600; font-size: 1.1rem; color: #1c1c1e;">Bạn có chắc chắn muốn xóa tổ hợp này?</p>
+                                                        <p class="text-danger small mb-0">Hành động này không thể hoàn tác!</p>
+                                                        <div class="bg-light p-3 mt-3 font-weight-600" style="border-radius: 5px;">
+                                                            Tổ hợp: <span class="badge bg-dark px-2 py-1" style="border-radius: 5px;">@item.MaToHop</span> - @item.TenToHop
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2" style="border-radius: 5px;">Xóa</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
