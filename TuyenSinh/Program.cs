@@ -27,7 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Configure Cookie authentication options
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/tai-khoan/dang-nhap";
+    options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 

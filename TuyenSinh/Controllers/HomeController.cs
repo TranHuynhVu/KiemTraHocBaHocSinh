@@ -16,13 +16,13 @@ namespace TuyenSinh.Controllers
         }
 
         [HttpGet("")]
-        public IActionResult TrangChu()
+        public IActionResult Index()
         {
             if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction("TongQuan", "Admin");
             }
-            return RedirectToAction("DangNhap", "Account");
+            return RedirectToAction("Login", "Account");
         }
 
         [HttpGet("chinh-sach-bao-mat")]

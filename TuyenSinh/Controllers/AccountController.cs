@@ -6,7 +6,6 @@ using TuyenSinh.Models;
 
 namespace TuyenSinh.Controllers
 {
-    [Route("tai-khoan")]
     public class AccountController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -18,20 +17,20 @@ namespace TuyenSinh.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet("dang-nhap")]
-        public IActionResult DangNhap(string? returnUrl = null)
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("TongQuan", "Admin");
+                return RedirectToAction("Index", "Admin");
             }
             ViewData["ReturnUrl"] = returnUrl;
-            return View("Login");
+            return View();
         }
 
-        [HttpPost("dang-nhap")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DangNhap(LoginViewModel model, string? returnUrl = null)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
@@ -43,26 +42,26 @@ namespace TuyenSinh.Controllers
                     {
                         return Redirect(returnUrl);
                     }
-                    return RedirectToAction("TongQuan", "Admin");
+                    return RedirectToAction("Index", "Admin");
                 }
                 ModelState.AddModelError(string.Empty, "Tài khoản hoặc mật khẩu không chính xác.");
             }
-            return View("Login", model);
+            return View(model);
         }
 
-        [HttpPost("dang-xuat")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DangXuat()
+        public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("DangNhap", "Account");
+            return RedirectToAction("Login", "Account");
         }
 
-        [HttpGet("dang-xuat")]
-        public async Task<IActionResult> DangXuatGet()
+        [HttpGet]
+        public async Task<IActionResult> LogoutGet()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("DangNhap", "Account");
+            return RedirectToAction("Login", "Account");
         }
     }
 }
