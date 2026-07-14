@@ -41,6 +41,20 @@ $(document).ready(function () {
         let files = this.files;
         if (files && files.length > 0) {
             let file = files[0];
+            let ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'xlsx') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Định dạng tệp không hợp lệ',
+                    text: 'Hệ thống chỉ hỗ trợ tệp tin Excel định dạng .xlsx.',
+                    confirmButtonColor: '#ff3b30'
+                });
+                fileInput.val('');
+                $('#fileInfoWrapper').addClass('d-none');
+                $('#selectFileBtnWrapper').removeClass('d-none');
+                $('#btnUpload').prop('disabled', true);
+                return;
+            }
             $('#selectedFileName').text(file.name);
             $('#fileInfoWrapper').removeClass('d-none');
             $('#selectFileBtnWrapper').addClass('d-none');
@@ -79,7 +93,7 @@ $(document).ready(function () {
         });
 
         $.ajax({
-            url: '/HocBa/UploadExcel',
+            url: '/admin/hoc-ba/tai-len',
             type: 'POST',
             data: formData,
             contentType: false,
@@ -88,7 +102,7 @@ $(document).ready(function () {
                 Swal.close();
                 if (res.success) {
                     // Redirect to Preview page with ExcelId
-                    window.location.href = `/HocBa/Preview?excelId=${res.excelId}`;
+                    window.location.href = `/admin/hoc-ba/xem-truoc?excelId=${res.excelId}`;
                 } else {
                     Swal.fire({
                         icon: 'error',

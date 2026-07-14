@@ -90,7 +90,7 @@
                 <h5 class="modal-title font-weight-700 modal-import-title" id="importModalLabel">Nhập dữ liệu ngành tuyển sinh</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-controller="Admin" asp-action="ImportNganh" enctype="multipart/form-data" method="post">
+            <form asp-controller="Admin" asp-action="NhapNganhTuExcel" enctype="multipart/form-data" method="post">
                 <div class="modal-body p-4">
                     <!-- Note/Banner using variables -->
                     <div class="alert border-0 shadow-sm mb-4 d-flex align-items-start gap-2 alert-import-info">
@@ -103,9 +103,9 @@
 
                     <div class="mb-3">
                         <label class="form-label font-weight-600 text-secondary">Chọn tệp tin Excel chứa danh sách ngành</label>
-                        <input type="file" name="file" class="form-control" accept=".xlsx, .xls" required />
+                        <input type="file" name="file" class="form-control" accept=".xlsx" required />
                         <div class="form-text text-muted small mt-2">
-                            Hỗ trợ tệp tin Excel (.xlsx, .xls) chứa trang bảng tính có tiêu đề ngành và chuyên ngành.
+                            Hỗ trợ tệp tin Excel (.xlsx) chứa trang bảng tính có tiêu đề ngành và chuyên ngành.
                         </div>
                     </div>
                 </div>

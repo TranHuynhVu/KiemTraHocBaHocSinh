@@ -1,0 +1,78 @@
+@{
+    ViewData["Title"] = "Đối chiếu học bạ & nguyện vọng";
+    ViewData["PageTitle"] = "Đối chiếu học bạ & nguyện vọng";
+    Layout = "_AdminLayout";
+}
+
+<div class="mb-4">
+    <h4 class="mb-1 doichieu-page-title">Đối chiếu học bạ &amp; nguyện vọng</h4>
+    <p class="text-muted small mb-0">Ghép dữ liệu học bạ với nguyện vọng theo CCCD, kiểm tra điểm CN theo tổ hợp của từng ngành đăng ký.</p>
+</div>
+
+<!-- Upload 2 files -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 px-4">
+        <h5 class="mb-0 doichieu-card-title">
+            <i class="fa-solid fa-files text-primary me-2"></i>Nạp dữ liệu đối chiếu
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="doiChieuForm" method="post" action="/admin/hoc-ba/nop-file-doi-chieu" enctype="multipart/form-data">
+            <div class="row g-4">
+                <!-- File 1: Học bạ -->
+                <div class="col-md-6">
+                    <label class="form-label doichieu-zone-label">
+                        <i class="fa-solid fa-file-excel text-success me-1"></i>File Học bạ thí sinh
+                    </label>
+                    <div class="doichieu-drop-zone" id="dropZoneHocBa">
+                        <div class="doichieu-upload-icon">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <p class="small text-muted mb-2">Kéo thả hoặc click để chọn file học bạ</p>
+                        <span class="doichieu-format-hint">.xlsx</span>
+                        
+                        <div id="fileHocBaInfo" class="doichieu-file-info d-none mt-2">
+                            <i class="fa-solid fa-file-excel text-success"></i>
+                            <span id="fileHocBaName"></span>
+                        </div>
+                    </div>
+                    <!-- Moved input outside to prevent event bubbling infinite loop -->
+                    <input type="file" name="fileHocBa" id="fileHocBa" class="file-input-hidden" accept=".xlsx" required />
+                </div>
+                <!-- File 2: Nguyện vọng -->
+                <div class="col-md-6">
+                    <label class="form-label doichieu-zone-label">
+                        <i class="fa-solid fa-file-excel text-primary me-1"></i>File Nguyện vọng thí sinh
+                    </label>
+                    <div class="doichieu-drop-zone" id="dropZoneNguyenVong">
+                        <div class="doichieu-upload-icon">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <p class="small text-muted mb-2">Kéo thả hoặc click để chọn file nguyện vọng</p>
+                        <span class="doichieu-format-hint">.xlsx</span>
+                        
+                        <div id="fileNguyenVongInfo" class="doichieu-file-info d-none mt-2">
+                            <i class="fa-solid fa-file-excel text-primary"></i>
+                            <span id="fileNguyenVongName"></span>
+                        </div>
+                    </div>
+                    <!-- Moved input outside to prevent event bubbling infinite loop -->
+                    <input type="file" name="fileNguyenVong" id="fileNguyenVong" class="file-input-hidden" accept=".xlsx" required />
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" id="btnDoiChieu" class="btn btn-primary btn-submit-upload" disabled>
+                    <i class="fa-solid fa-magnifying-glass-chart me-2"></i>Kiểm tra đối chiếu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const errorMessage = '@Html.Raw(TempData["ErrorMessage"] ?? "")';
+    </script>
+    <script src="~/js/hocba/doichieu.js" asp-append-version="true"></script>
+}

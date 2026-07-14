@@ -445,3 +445,130 @@ table.dataTable tbody td {
     color: var(--primary-color);
     border: 1px solid rgba(0, 122, 255, 0.15);
 }
+
+/* === Chức năng 2: Đối chiếu Học bạ & Nguyện vọng === */
+.doichieu-page-title {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.doichieu-card-title {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.doichieu-zone-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+}
+
+.doichieu-drop-zone {
+    border: 2px dashed #d1d1d6;
+    border-radius: 10px;
+    background-color: #fafafa;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.doichieu-drop-zone:hover,
+.doichieu-drop-zone.dragover {
+    border-color: var(--primary-color);
+    background-color: #f5fafd;
+}
+
+.doichieu-upload-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease;
+}
+
+.doichieu-drop-zone:hover .doichieu-upload-icon {
+    transform: scale(1.08);
+}
+
+.doichieu-format-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: #f2f2f7;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.doichieu-file-info {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    border: 1px solid rgba(0, 122, 255, 0.15);
+}
+
+.doichieu-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.doichieu-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* === Shared upload utilities === */
+.file-input-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.btn-submit-upload {
+    padding: 12px 30px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-submit-upload:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 122, 255, 0.2);
+}
+
+.btn-submit-upload:disabled {
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}

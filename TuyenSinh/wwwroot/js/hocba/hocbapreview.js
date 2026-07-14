@@ -3,7 +3,7 @@ let rawTable, missingGradesTable, missingScoresTable;
 $(document).ready(function () {
     rawTable = $('#rawPreviewTable').DataTable({
         ajax: {
-            url: `/HocBa/GetPreviewData?excelId=${excelId}`,
+            url: `/admin/hoc-ba/lay-du-lieu-xem-truoc?excelId=${excelId}`,
             dataSrc: 'data'
         },
         processing: true,
@@ -76,7 +76,7 @@ $(document).ready(function () {
         });
 
         $.ajax({
-            url: '/HocBa/CheckHocBa',
+            url: '/admin/hoc-ba/thuc-hien-kiem-tra',
             type: 'POST',
             data: { excelId: excelId },
             success: function (res) {
@@ -117,11 +117,45 @@ $(document).ready(function () {
         });
     });
 
-    // Handle Export Excel button click
+    // Handle Export Excel button click with AJAX loading dialog
     $('#btnExportMissingScores').click(function () {
-        window.location.href = `/HocBa/ExportMissingScores?excelId=${excelId}`;
+        const url = `/admin/hoc-ba/xuat-excel-thieu-diem?excelId=${excelId}`;
+        downloadExcelWithLoading(url, 'ThiSinh_ThieuDiem_ToHop.xlsx');
     });
 });
+
+function downloadExcelWithLoading(url, fileName) {
+    Swal.fire({
+        title: 'Đang xuất tệp Excel...',
+        text: 'Hệ thống đang chuẩn bị tệp báo cáo Excel, vui lòng đợi trong giây lát...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Yêu cầu xuất tệp thất bại.');
+            return response.blob();
+        })
+        .then(blob => {
+            Swal.close();
+            const downloadUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(downloadUrl);
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('Lỗi', error.message || 'Không thể xuất tệp Excel.', 'error');
+        });
+}
 
 function renderResults(res) {
     // Update badges

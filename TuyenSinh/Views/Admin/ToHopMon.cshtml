@@ -14,7 +14,7 @@
                 <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Thêm tổ hợp mới</h5>
             </div>
             <div class="card-body">
-                <form asp-controller="Admin" asp-action="CreateToHopMon" method="post">
+                <form asp-controller="Admin" asp-action="ThemToHopMon" method="post">
                     <div class="mb-3">
                         <label class="form-label font-weight-500">Mã tổ hợp</label>
                         <input type="text" name="maToHop" class="form-control" placeholder="Ví dụ: A00" style="text-transform: uppercase;" required />
@@ -129,7 +129,7 @@
                                                     <h5 class="modal-title font-weight-700" style="color: #1c1c1e;">Chỉnh sửa tổ hợp</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <form asp-controller="Admin" asp-action="EditToHopMon" method="post">
+                                                <form asp-controller="Admin" asp-action="SuaToHopMon" method="post">
                                                     <div class="modal-body p-4">
                                                         <input type="hidden" name="id" value="@item.Id" />
                                                         <div class="mb-3">
@@ -173,7 +173,7 @@
                                                     <h5 class="modal-title font-weight-700" style="color: #d9534f;">Xác nhận xóa tổ hợp</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <form asp-controller="Admin" asp-action="DeleteToHopMon" method="post">
+                                                <form asp-controller="Admin" asp-action="XoaToHopMon" method="post">
                                                     <div class="modal-body p-4 text-center">
                                                         <input type="hidden" name="id" value="@item.Id" />
                                                         <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>

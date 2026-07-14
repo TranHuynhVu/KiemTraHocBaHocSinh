@@ -46,6 +46,8 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 
+builder.Services.AddMemoryCache();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>

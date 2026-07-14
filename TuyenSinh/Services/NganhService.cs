@@ -35,6 +35,12 @@ namespace TuyenSinh.Services
                 return (false, "Vui lòng chọn tệp Excel.");
             }
 
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (extension != ".xlsx")
+            {
+                return (false, "Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
+            }
+
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -49,7 +55,6 @@ namespace TuyenSinh.Services
 
                     var existingToHops = await _context.ToHopMons.ToListAsync();
 
-                    // Clean existing data for fresh reload
                     _context.ToHopNganhs.RemoveRange(_context.ToHopNganhs);
                     _context.Nganhs.RemoveRange(_context.Nganhs);
                     await _context.SaveChangesAsync();

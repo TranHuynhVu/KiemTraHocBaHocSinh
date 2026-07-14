@@ -32,13 +32,13 @@ namespace TuyenSinh.Services
         {
             if (file == null || file.Length == 0)
             {
-                return (false, "Vui lòng chọn tệp Excel để tải lên.", null, null);
+                return (false, "Vui lÃ²ng chá»n tá»‡p Excel Ä‘á»ƒ táº£i lÃªn.", null, null);
             }
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-            if (extension != ".xlsx" && extension != ".xls" && extension != ".csv")
+            if (extension != ".xlsx")
             {
-                return (false, "Hỗ trợ định dạng .xlsx, .xls, .csv.", null, null);
+                return (false, "Hỗ trợ định dạng .xlsx.", null, null);
             }
 
             var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
@@ -82,7 +82,7 @@ namespace TuyenSinh.Services
                 // Schedule deletion after 30 minutes via Hangfire
                 _backgroundJobClient.Schedule<IHocBaService>(s => s.DeleteExpiredFileAsync(excelId), TimeSpan.FromMinutes(30));
 
-                return (true, "Tải lên và đọc tệp thành công.", excelId, previewData);
+                return (true, "Táº£i lÃªn vÃ  Ä‘á»c tá»‡p thÃ nh cÃ´ng.", excelId, previewData);
             }
             catch (Exception ex)
             {
@@ -91,7 +91,7 @@ namespace TuyenSinh.Services
                 {
                     System.IO.File.Delete(filePath);
                 }
-                return (false, "Lỗi khi đọc tệp Excel: " + ex.Message, null, null);
+                return (false, "Lá»—i khi Ä‘á»c tá»‡p Excel: " + ex.Message, null, null);
             }
         }
 
@@ -139,7 +139,7 @@ namespace TuyenSinh.Services
             if (string.IsNullOrEmpty(excelId))
             {
                 result.ThanhCong = false;
-                result.ThongBao = "Không tìm thấy mã tệp Excel.";
+                result.ThongBao = "KhÃ´ng tÃ¬m tháº¥y mÃ£ tá»‡p Excel.";
                 return result;
             }
 
@@ -150,7 +150,7 @@ namespace TuyenSinh.Services
             if (!System.IO.File.Exists(filePath))
             {
                 result.ThanhCong = false;
-                result.ThongBao = "Tệp Excel không tồn tại trên hệ thống.";
+                result.ThongBao = "Tá»‡p Excel khÃ´ng tá»“n táº¡i trÃªn há»‡ thá»‘ng.";
                 return result;
             }
 
@@ -162,7 +162,7 @@ namespace TuyenSinh.Services
             catch (Exception ex)
             {
                 result.ThanhCong = false;
-                result.ThongBao = "Có lỗi xảy ra khi đọc tệp Excel: " + ex.Message;
+                result.ThongBao = "CÃ³ lá»—i xáº£y ra khi Ä‘á»c tá»‡p Excel: " + ex.Message;
                 return result;
             }
 
@@ -248,6 +248,283 @@ namespace TuyenSinh.Services
             result.DanhSachThieuDiem = baoCaoThieuDiem;
 
             return result;
+        }
+
+        public async Task<string> LuuFileTamThoiAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("Tệp tin trống.");
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (extension != ".xlsx")
+            {
+                throw new ArgumentException("Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
+            }
+            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var fileId = Guid.NewGuid().ToString() + extension;
+            var filePath = Path.Combine(uploadsFolder, fileId);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Schedule deletion after 30 minutes via Hangfire
+            _backgroundJobClient.Schedule<IHocBaService>(s => s.DeleteExpiredFileAsync(fileId), TimeSpan.FromMinutes(30));
+
+            return fileId;
+        }
+
+        public async Task<KetQuaDoiChieu> DoiChieuHocBaVaNguyenVongAsync(string hocBaFileId, string nguyenVongFileId)
+        {
+            var ketQua = new KetQuaDoiChieu();
+            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads");
+
+            var fileHocBaPath = Path.Combine(uploadsFolder, hocBaFileId);
+            var fileNguyenVongPath = Path.Combine(uploadsFolder, nguyenVongFileId);
+
+            if (!System.IO.File.Exists(fileHocBaPath))
+            {
+                ketQua.ThanhCong = false;
+                ketQua.ThongBao = "File học bạ không tồn tại hoặc đã hết hạn.";
+                return ketQua;
+            }
+
+            if (!System.IO.File.Exists(fileNguyenVongPath))
+            {
+                ketQua.ThanhCong = false;
+                ketQua.ThongBao = "File nguyện vọng không tồn tại hoặc đã hết hạn.";
+                return ketQua;
+            }
+
+            var globalStart = DateTime.Now;
+            Console.WriteLine($"[DoiChieu] Bắt đầu xử lý. Thời gian: {globalStart:HH:mm:ss.fff}");
+
+            // 1. Đọc file học bạ vào bộ nhớ tạm
+            var hbStart = DateTime.Now;
+            List<HocBaTHPTImport> danhSachHocBa;
+            try
+            {
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var pkgHB = new ExcelPackage(new FileInfo(fileHocBaPath));
+                var sheetHB = pkgHB.Workbook.Worksheets[0];
+                int totalRowsHB = sheetHB.Dimension.End.Row;
+                Console.WriteLine($"[DoiChieu] Mở file học bạ thành công. Tổng số dòng trong file: {totalRowsHB}");
+                
+                danhSachHocBa = new List<HocBaTHPTImport>();
+                for (int r = 4; r <= totalRowsHB; r++)
+                {
+                    var item = new HocBaTHPTImport
+                    {
+                        STT = ParseInt(sheetHB.Cells[r, 1].Value),
+                        SoDDCN = ParseString(sheetHB.Cells[r, 2].Value),
+                        HoVaTen = ParseString(sheetHB.Cells[r, 3].Value),
+                        Lop = ParseInt(sheetHB.Cells[r, 6].Value),
+                        ToanCN = ParseDecimal(sheetHB.Cells[r, 26].Value),
+                        VanCN = ParseDecimal(sheetHB.Cells[r, 29].Value),
+                        VatLyCN = ParseDecimal(sheetHB.Cells[r, 32].Value),
+                        HoaHocCN = ParseDecimal(sheetHB.Cells[r, 35].Value),
+                        SinhHocCN = ParseDecimal(sheetHB.Cells[r, 38].Value),
+                        LichSuCN = ParseDecimal(sheetHB.Cells[r, 41].Value),
+                        DiaLyCN = ParseDecimal(sheetHB.Cells[r, 44].Value),
+                        GDCDCN = ParseDecimal(sheetHB.Cells[r, 47].Value),
+                        KTPLCN = ParseDecimal(sheetHB.Cells[r, 50].Value),
+                        TinHocCN = ParseDecimal(sheetHB.Cells[r, 53].Value),
+                        CNCNCN = ParseDecimal(sheetHB.Cells[r, 56].Value),
+                        CNNNCN = ParseDecimal(sheetHB.Cells[r, 59].Value),
+                        NgoaiNguCN = ParseDecimal(sheetHB.Cells[r, 62].Value),
+                        MonNgoaiNgu = ParseString(sheetHB.Cells[r, 63].Value),
+                        TuChonSongNguCN = ParseDecimal(sheetHB.Cells[r, 66].Value),
+                        QPANCN = ParseDecimal(sheetHB.Cells[r, 69].Value),
+                        TiengDanTocCN = ParseDecimal(sheetHB.Cells[r, 72].Value),
+                        NgoaiNgu2CN = ParseDecimal(sheetHB.Cells[r, 75].Value),
+                        ToanPhapCN = ParseDecimal(sheetHB.Cells[r, 79].Value),
+                    };
+                    if (!string.IsNullOrWhiteSpace(item.SoDDCN) && !string.IsNullOrWhiteSpace(item.HoVaTen))
+                        danhSachHocBa.Add(item);
+                }
+                Console.WriteLine($"[DoiChieu] Đọc xong file học bạ. Số bản ghi hợp lệ: {danhSachHocBa.Count}. Thời gian: {(DateTime.Now - hbStart).TotalSeconds} giây.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DoiChieu] Lỗi khi đọc file học bạ: {ex.Message}");
+                ketQua.ThanhCong = false;
+                ketQua.ThongBao = "Lỗi khi đọc file học bạ: " + ex.Message;
+                return ketQua;
+            }
+
+            // Group học bạ theo CCCD, lấy từng năm 10, 11, 12
+            var groupStart = DateTime.Now;
+            var hocBaTheoCccd = danhSachHocBa
+                .GroupBy(r => r.SoDDCN)
+                .ToDictionary(g => g.Key!, g => g.ToList());
+            Console.WriteLine($"[DoiChieu] Group học bạ thành công. Số CCCD duy nhất: {hocBaTheoCccd.Count}. Thời gian: {(DateTime.Now - groupStart).TotalSeconds} giây.");
+
+            // 2. Đọc file nguyện vọng (header ở Row 5)
+            var nvStart = DateTime.Now;
+            List<NguyenVongItem> danhSachNV;
+            try
+            {
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var pkgNV = new ExcelPackage(new FileInfo(fileNguyenVongPath));
+                var sheetNV = pkgNV.Workbook.Worksheets[0];
+                int totalRowsNV = sheetNV.Dimension.End.Row;
+                Console.WriteLine($"[DoiChieu] Mở file nguyện vọng thành công. Tổng số dòng trong file: {totalRowsNV}");
+                
+                danhSachNV = new List<NguyenVongItem>();
+                for (int r = 6; r <= totalRowsNV; r++)
+                {
+                    var cccd = ParseString(sheetNV.Cells[r, 2].Value);
+                    var thuTuNV = ParseInt(sheetNV.Cells[r, 3].Value) ?? 0;
+                    var maXetTuyen = ParseString(sheetNV.Cells[r, 6].Value);
+                    var tenNganh = ParseString(sheetNV.Cells[r, 7].Value);
+                    if (!string.IsNullOrWhiteSpace(cccd) && !string.IsNullOrWhiteSpace(maXetTuyen))
+                    {
+                        danhSachNV.Add(new NguyenVongItem
+                        {
+                            SoDDCN = cccd,
+                            ThuTuNV = thuTuNV,
+                            MaXetTuyen = maXetTuyen,
+                            TenNganh = tenNganh
+                        });
+                    }
+                }
+                Console.WriteLine($"[DoiChieu] Đọc xong file nguyện vọng. Số bản ghi hợp lệ: {danhSachNV.Count}. Thời gian: {(DateTime.Now - nvStart).TotalSeconds} giây.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DoiChieu] Lỗi khi đọc file nguyện vọng: {ex.Message}");
+                ketQua.ThanhCong = false;
+                ketQua.ThongBao = "Lỗi khi đọc file nguyện vọng: " + ex.Message;
+                return ketQua;
+            }
+
+            ketQua.TongNguyenVong = danhSachNV.Count;
+
+            // 3. Load toàn bộ Nganh + ToHopNganh + ToHopMon + MonHocs từ DB (Sử dụng AsNoTracking để tối ưu tốc độ)
+            var dbStart = DateTime.Now;
+            var danhSachNganh = await _context.Nganhs
+                .AsNoTracking()
+                .Include(n => n.ToHopNganhs)
+                    .ThenInclude(th => th.ToHopMon)
+                        .ThenInclude(t => t.MonHocs)
+                .ToListAsync();
+
+            // Chuyển sang Dictionary để tìm kiếm O(1)
+            var nganhDict = danhSachNganh
+                .Where(n => !string.IsNullOrEmpty(n.MaNganh))
+                .ToDictionary(n => n.MaNganh!.Trim(), n => n, StringComparer.OrdinalIgnoreCase);
+
+            Console.WriteLine($"[DoiChieu] Đọc DB thành công. Số ngành: {danhSachNganh.Count}. Dictionary Ngành: {nganhDict.Count} phần tử. Thời gian: {(DateTime.Now - dbStart).TotalSeconds} giây.");
+
+            // 4. Xử lý từng nguyện vọng (Group theo CCCD để tối ưu hóa)
+            var processingStart = DateTime.Now;
+            var maNganhKhongTimThay = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var ketQuaThieuDiem = new List<KetQuaDoiChieuItem>();
+            int stt = 1;
+
+            // Group nguyện vọng theo CCCD
+            var nvTheoCccd = danhSachNV
+                .GroupBy(nv => nv.SoDDCN!)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var kvp in nvTheoCccd)
+            {
+                var cccd = kvp.Key;
+                var listNV = kvp.Value;
+
+                // Lấy học bạ của thí sinh bằng Dictionary (O(1))
+                if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
+                {
+                    continue;
+                }
+
+                var tenHoVaTen = hocBaThiSinh.FirstOrDefault()?.HoVaTen;
+
+                // Lấy record theo từng năm của thí sinh này một lần duy nhất
+                var lopHB10 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 10);
+                var lopHB11 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 11);
+                var lopHB12 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 12);
+
+                foreach (var nv in listNV)
+                {
+                    var maNganh = nv.MaXetTuyen!.Trim();
+
+                    // Tìm ngành trong DB bằng Dictionary (O(1))
+                    if (!nganhDict.TryGetValue(maNganh, out var nganh))
+                    {
+                        maNganhKhongTimThay.Add(maNganh);
+                        continue;
+                    }
+
+                    // Kiểm tra mỗi tổ hợp của ngành
+                    foreach (var toHopNganh in nganh.ToHopNganhs)
+                    {
+                        var toHop = toHopNganh.ToHopMon;
+                        if (toHop == null) continue;
+
+                        // Kiểm tra từng môn trong tổ hợp, theo từng năm
+                        var cacNamRecord = new[] {
+                            (Nam: "Lớp 10", Record: lopHB10),
+                            (Nam: "Lớp 11", Record: lopHB11),
+                            (Nam: "Lớp 12", Record: lopHB12)
+                        };
+
+                        foreach (var (namHoc, record) in cacNamRecord)
+                        {
+                            var cacMonThieu = new List<string>();
+
+                            foreach (var monHoc in toHop.MonHocs)
+                            {
+                                decimal? diem = record == null ? null : GetScore(record, monHoc.FieldName);
+                                if (diem == null)
+                                {
+                                    cacMonThieu.Add(LayTenHienThiMonHocCN(monHoc.FieldName));
+                                }
+                            }
+
+                            if (cacMonThieu.Count > 0)
+                            {
+                                ketQuaThieuDiem.Add(new KetQuaDoiChieuItem
+                                {
+                                    Stt = stt++,
+                                    SoDDCN = cccd,
+                                    HoVaTen = tenHoVaTen,
+                                    ThuTuNV = nv.ThuTuNV,
+                                    MaNganh = nganh.MaNganh,
+                                    TenNganh = nganh.TenNganh,
+                                    MaToHop = toHop.MaToHop,
+                                    NamHoc = namHoc,
+                                    MonThieu = string.Join(", ", cacMonThieu)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"[DoiChieu] Hoàn tất vòng lặp xử lý đối chiếu. Số lỗi thiếu điểm: {ketQuaThieuDiem.Count}. Thời gian: {(DateTime.Now - processingStart).TotalSeconds} giây.");
+            Console.WriteLine($"[DoiChieu] Tổng thời gian thực thi: {(DateTime.Now - globalStart).TotalSeconds} giây.");
+
+            ketQua.TongLoiKhongTimThayNganh = maNganhKhongTimThay.Count;
+            ketQua.DanhSachMaNganhKhongTim = maNganhKhongTimThay.ToList();
+            ketQua.DanhSachThieuDiem = ketQuaThieuDiem;
+            ketQua.ThanhCong = true;
+            if (maNganhKhongTimThay.Count > 0)
+            {
+                ketQua.ThongBao = $"Hoàn tất. Có {maNganhKhongTimThay.Count} mã xét tuyển không tìm thấy trong CSDL: {string.Join(", ", maNganhKhongTimThay)}.";
+            }
+
+            return ketQua;
         }
 
         #region Helper Methods for Excel Parsing & Score Mapping
@@ -469,3 +746,4 @@ namespace TuyenSinh.Services
         #endregion
     }
 }
+

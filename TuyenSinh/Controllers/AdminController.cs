@@ -8,6 +8,7 @@ using TuyenSinh.Services;
 namespace TuyenSinh.Controllers
 {
     [Authorize(Roles = "Admin")]
+    [Route("admin")]
     public class AdminController : Controller
     {
         private readonly IMonHocService _monHocService;
@@ -24,26 +25,27 @@ namespace TuyenSinh.Controllers
             _nganhService = nganhService;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet("")]
+        public async Task<IActionResult> TongQuan()
         {
             var subjects = await _monHocService.LayDanhSachMonHocAsync();
             var combinations = await _toHopMonService.LayDanhSachToHopAsync();
             ViewBag.CountSubjects = subjects.Count;
             ViewBag.CountCombinations = combinations.Count;
-            return View();
+            return View("Index");
         }
 
         #region Quản lý môn học (MonHoc CRUD)
 
-        [HttpGet]
-        public async Task<IActionResult> MonHoc()
+        [HttpGet("mon-hoc")]
+        public async Task<IActionResult> QuanLyMonHoc()
         {
             var list = await _monHocService.LayDanhSachMonHocAsync();
-            return View(list);
+            return View("MonHoc", list);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateMonHoc(string tenMonHoc, string fieldName)
+        [HttpPost("mon-hoc/them")]
+        public async Task<IActionResult> ThemMonHoc(string tenMonHoc, string fieldName)
         {
             var result = await _monHocService.ThemMonHocAsync(tenMonHoc, fieldName);
             if (result.Success)
@@ -54,11 +56,11 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(MonHoc));
+            return RedirectToAction(nameof(QuanLyMonHoc));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> EditMonHoc(int id, string tenMonHoc, string fieldName)
+        [HttpPost("mon-hoc/sua")]
+        public async Task<IActionResult> SuaMonHoc(int id, string tenMonHoc, string fieldName)
         {
             var result = await _monHocService.SuaMonHocAsync(id, tenMonHoc, fieldName);
             if (result.Success)
@@ -69,11 +71,11 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(MonHoc));
+            return RedirectToAction(nameof(QuanLyMonHoc));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteMonHoc(int id)
+        [HttpPost("mon-hoc/xoa")]
+        public async Task<IActionResult> XoaMonHoc(int id)
         {
             var result = await _monHocService.XoaMonHocAsync(id);
             if (result.Success)
@@ -84,23 +86,23 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(MonHoc));
+            return RedirectToAction(nameof(QuanLyMonHoc));
         }
 
         #endregion
 
         #region Quản lý tổ hợp (ToHopMon CRUD)
 
-        [HttpGet]
-        public async Task<IActionResult> ToHopMon()
+        [HttpGet("to-hop-mon")]
+        public async Task<IActionResult> QuanLyToHopMon()
         {
             var combinations = await _toHopMonService.LayDanhSachToHopAsync();
             ViewBag.Subjects = await _monHocService.LayDanhSachMonHocAsync();
-            return View(combinations);
+            return View("ToHopMon", combinations);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateToHopMon(string maToHop, string tenToHop, List<int> selectedSubjectIds)
+        [HttpPost("to-hop-mon/them")]
+        public async Task<IActionResult> ThemToHopMon(string maToHop, string tenToHop, List<int> selectedSubjectIds)
         {
             var result = await _toHopMonService.ThemToHopAsync(maToHop, tenToHop, selectedSubjectIds);
             if (result.Success)
@@ -111,11 +113,11 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(ToHopMon));
+            return RedirectToAction(nameof(QuanLyToHopMon));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> EditToHopMon(int id, string maToHop, string tenToHop, List<int> selectedSubjectIds)
+        [HttpPost("to-hop-mon/sua")]
+        public async Task<IActionResult> SuaToHopMon(int id, string maToHop, string tenToHop, List<int> selectedSubjectIds)
         {
             var result = await _toHopMonService.SuaToHopAsync(id, maToHop, tenToHop, selectedSubjectIds);
             if (result.Success)
@@ -126,11 +128,11 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(ToHopMon));
+            return RedirectToAction(nameof(QuanLyToHopMon));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteToHopMon(int id)
+        [HttpPost("to-hop-mon/xoa")]
+        public async Task<IActionResult> XoaToHopMon(int id)
         {
             var result = await _toHopMonService.XoaToHopAsync(id);
             if (result.Success)
@@ -141,22 +143,22 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(ToHopMon));
+            return RedirectToAction(nameof(QuanLyToHopMon));
         }
 
         #endregion
 
         #region Quản lý ngành học (Nganh CRUD)
 
-        [HttpGet]
-        public async Task<IActionResult> Nganh()
+        [HttpGet("nganh")]
+        public async Task<IActionResult> QuanLyNganh()
         {
             var list = await _nganhService.LayDanhSachNganhAsync();
-            return View(list);
+            return View("Nganh", list);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ImportNganh(IFormFile file)
+        [HttpPost("nganh/nhap-excel")]
+        public async Task<IActionResult> NhapNganhTuExcel(IFormFile file)
         {
             var result = await _nganhService.NhapNganhTuExcelAsync(file);
             if (result.Success)
@@ -167,7 +169,7 @@ namespace TuyenSinh.Controllers
             {
                 TempData["Error"] = result.Message;
             }
-            return RedirectToAction(nameof(Nganh));
+            return RedirectToAction(nameof(QuanLyNganh));
         }
 
         #endregion

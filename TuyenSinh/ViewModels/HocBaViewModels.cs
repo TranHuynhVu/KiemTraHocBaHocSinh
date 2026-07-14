@@ -46,4 +46,38 @@ namespace TuyenSinh.ViewModels
         public List<BaoCaoThieuNamHocItem> DanhSachThieuNamHoc { get; set; } = new();
         public List<BaoCaoThieuDiemItem> DanhSachThieuDiem { get; set; } = new();
     }
+
+    // === Chức năng 2: Đối chiếu Học bạ & Nguyện vọng ===
+
+    public class NguyenVongItem
+    {
+        public string? SoDDCN { get; set; }
+        public int ThuTuNV { get; set; }
+        public string? MaXetTuyen { get; set; }
+        public string? TenNganh { get; set; }
+    }
+
+    public class KetQuaDoiChieuItem
+    {
+        public int Stt { get; set; }
+        public string? SoDDCN { get; set; }
+        public string? HoVaTen { get; set; }
+        public int ThuTuNV { get; set; }
+        public string? MaNganh { get; set; }
+        public string? TenNganh { get; set; }
+        public string? MaToHop { get; set; }
+        public string? NamHoc { get; set; }
+        public string? MonThieu { get; set; }
+    }
+
+    public class KetQuaDoiChieu
+    {
+        public bool ThanhCong { get; set; }
+        public string? ThongBao { get; set; }
+        public int TongNguyenVong { get; set; }
+        public int TongLoiKhongTimThayNganh { get; set; }
+        public List<string> DanhSachMaNganhKhongTim { get; set; } = new();
+        public List<KetQuaDoiChieuItem> DanhSachThieuDiem { get; set; } = new();
+    }
 }
+

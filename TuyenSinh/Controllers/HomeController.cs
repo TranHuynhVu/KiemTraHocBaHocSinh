@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TuyenSinh.Models;
+using Microsoft.Extensions.Logging;
 
 namespace TuyenSinh.Controllers
 {
+    [Route("")]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -13,25 +15,27 @@ namespace TuyenSinh.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        [HttpGet("")]
+        public IActionResult TrangChu()
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "Admin");
+                return RedirectToAction("TongQuan", "Admin");
             }
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("DangNhap", "Account");
         }
 
-
-        public IActionResult Privacy()
+        [HttpGet("chinh-sach-bao-mat")]
+        public IActionResult ChinhSachBaoMat()
         {
-            return View();
+            return View("Privacy");
         }
 
+        [HttpGet("loi")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult BaoLoi()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

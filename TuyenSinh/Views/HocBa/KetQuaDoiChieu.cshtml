@@ -1,0 +1,100 @@
+@model TuyenSinh.ViewModels.KetQuaDoiChieu
+@{
+    ViewData["Title"] = "Kết quả đối chiếu học bạ & nguyện vọng";
+    ViewData["PageTitle"] = "Kết quả đối chiếu học bạ & nguyện vọng";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-1 doichieu-page-title">Kết quả đối chiếu học bạ &amp; nguyện vọng</h4>
+        <p class="text-muted small mb-0">Danh sách các thí sinh thiếu điểm môn học theo từng nguyện vọng đăng ký xét tuyển.</p>
+    </div>
+    <a href="/admin/hoc-ba/doi-chieu" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 6px;">
+        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại nạp tệp
+    </a>
+</div>
+
+<!-- Alert mã ngành không tìm thấy (Được hiện động qua JS) -->
+<div id="alertNganhNotFound" class="alert alert-import-info d-flex align-items-start gap-2 mb-4 d-none">
+    <i class="fa-solid fa-triangle-exclamation fs-5 mt-1 text-warning"></i>
+    <div>
+        <strong class="d-block mb-1 text-warning">Cảnh báo: Có một số mã xét tuyển không tìm thấy trong CSDL</strong>
+        <p class="small mb-0 text-dark" id="alertNganhNotFoundText"></p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 8px;">
+            <div class="doichieu-stat-value text-primary" id="statTongNV">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Tổng số nguyện vọng đối chiếu</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 8px;">
+            <div class="doichieu-stat-value text-danger" id="statTongLoi">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Số nguyện vọng thiếu điểm (lỗi)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 8px;">
+            <div class="doichieu-stat-value text-warning" id="statNganhKhongTim">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Mã xét tuyển không tìm thấy</div>
+        </div>
+    </div>
+</div>
+
+<!-- Kết quả Table -->
+<div class="card border-0 shadow-sm" style="border-radius: 8px;">
+    <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between" style="border-bottom: 1px solid #e5e5ea;">
+        <h5 class="mb-0 doichieu-card-title">
+            <i class="fa-solid fa-table-list text-danger me-2"></i>Danh sách thí sinh thiếu điểm theo nguyện vọng
+        </h5>
+        <div class="d-flex gap-2">
+            <button id="btnExportExcel" class="btn btn-success btn-sm px-3" style="border-radius: 6px;">
+                <i class="fa-solid fa-file-excel me-1"></i>Xuất Excel
+            </button>
+            <button id="btnExportCsv" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 6px;">
+                <i class="fa-solid fa-file-csv me-1"></i>Xuất CSV
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="doiChieuTable" class="table table-striped table-bordered w-100">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">STT</th>
+                        <th style="width: 130px;">Số ĐDCN (CCCD)</th>
+                        <th>Họ và Tên</th>
+                        <th style="width: 80px;">TT NV</th>
+                        <th>Ngành đăng ký</th>
+                        <th style="width: 100px;">Tổ hợp</th>
+                        <th style="width: 110px;">Năm học</th>
+                        <th>Môn thiếu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loaded dynamically via AJAX DataTable -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Set parameters globally for external script reference
+        const hocBaFileId = '@ViewBag.HocBaFileId';
+        const nguyenVongFileId = '@ViewBag.NguyenVongFileId';
+    </script>
+    <script src="~/js/hocba/ketquadoichieu.js" asp-append-version="true"></script>
+}

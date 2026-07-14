@@ -29,33 +29,39 @@
         </div>
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a href="/Admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                <a href="/admin" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "TongQuan" ? "active" : "")">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Tổng quan</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/Admin/MonHoc" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "MonHoc" ? "active" : "")">
+                <a href="/admin/mon-hoc" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "QuanLyMonHoc" ? "active" : "")">
                     <i class="fa-solid fa-book"></i>
                     <span>Quản lý môn học</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/Admin/ToHopMon" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "ToHopMon" ? "active" : "")">
+                <a href="/admin/to-hop-mon" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "QuanLyToHopMon" ? "active" : "")">
                     <i class="fa-solid fa-layer-group"></i>
                     <span>Quản lý tổ hợp môn</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/Admin/Nganh" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Nganh" ? "active" : "")">
+                <a href="/admin/nganh" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "QuanLyNganh" ? "active" : "")">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Quản lý ngành học</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/HocBa" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HocBa" ? "active" : "")">
+                <a href="/admin/hoc-ba" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HocBa" && ViewContext.RouteData.Values["action"]?.ToString() == "KiemTraHocBa" ? "active" : "")">
                     <i class="fa-solid fa-clipboard-check"></i>
                     <span>Kiểm tra học bạ</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="/admin/hoc-ba/doi-chieu" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HocBa" && ViewContext.RouteData.Values["action"]?.ToString() == "DoiChieuHocBaNguyenVong" ? "active" : "")">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Đối chiếu HB &amp; NV</span>
                 </a>
             </li>
         </ul>
@@ -70,7 +76,7 @@
                     <div class="user-role">Administrator</div>
                 </div>
             </div>
-            <a href="/Account/LogoutGet" class="btn btn-outline-danger w-100 btn-sm" style="border-radius: 5px;">
+            <a href="/tai-khoan/dang-xuat" class="btn btn-outline-danger w-100 btn-sm" style="border-radius: 5px;">
                 <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
             </a>
         </div>
