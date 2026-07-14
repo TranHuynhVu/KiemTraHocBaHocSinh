@@ -27,7 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Configure Cookie authentication options
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
+    options.LoginPath = "/tai-khoan/dang-nhap";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
@@ -64,6 +64,10 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
+    
+    // Automatically create database and run migrations on remote server
+    // await context.Database.MigrateAsync();
+
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     await DbInitializer.SeedAsync(context, userManager, roleManager);
