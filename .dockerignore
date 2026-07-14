@@ -1,0 +1,14 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/out
+**/wwwroot/uploads/*
+!**/wwwroot/uploads/.gitkeep
+**/.idea
+**/.vscode
+**/*.user
+**/*.suo
+**/node_modules
+Dockerfile
+.dockerignore
