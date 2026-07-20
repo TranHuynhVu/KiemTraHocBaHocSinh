@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using TuyenSinh.Services;
 using OfficeOpenXml;
+using TuyenSinh.ViewModels;
 
 namespace TuyenSinh.Controllers
 {
@@ -84,7 +85,7 @@ namespace TuyenSinh.Controllers
         {
             if (string.IsNullOrEmpty(excelId))
             {
-                return BadRequest("Mã tệp Excel không hợp lệ.");
+                return BadRequest("Excel không hợp lệ.");
             }
 
             var result = await _hocBaService.CheckHocBaAsync(excelId);
@@ -111,8 +112,8 @@ namespace TuyenSinh.Controllers
                 {
                     range.Style.Font.Bold = true;
                     range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255)); // Light blue matching --primary-light
-                    range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255)); // Primary color
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
                 }
 
                 // Data
@@ -141,7 +142,7 @@ namespace TuyenSinh.Controllers
             return View("DoiChieu");
         }
 
-        [HttpPost("nop-file-doi-chieu")]
+        [HttpPost("ket-qua-doi-chieu")]
         public async Task<IActionResult> NopFileDoiChieu(IFormFile fileHocBa, IFormFile fileNguyenVong)
         {
             if (fileHocBa == null || fileHocBa.Length == 0)
@@ -157,15 +158,13 @@ namespace TuyenSinh.Controllers
 
             try
             {
-                // Instantly save files (takes < 0.2s)
                 var hocBaFileId = await _hocBaService.LuuFileTamThoiAsync(fileHocBa);
                 var nguyenVongFileId = await _hocBaService.LuuFileTamThoiAsync(fileNguyenVong);
 
                 ViewBag.HocBaFileId = hocBaFileId;
                 ViewBag.NguyenVongFileId = nguyenVongFileId;
 
-                // Render results view instantly. Comparison runs via AJAX.
-                return View("KetQuaDoiChieu", new TuyenSinh.ViewModels.KetQuaDoiChieu());
+                return View("KetQuaDoiChieu", new KetQuaDoiChieu());
             }
             catch (Exception ex)
             {

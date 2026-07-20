@@ -59,20 +59,6 @@ builder.Services.AddControllersWithViews()
 
 var app = builder.Build();
 
-// Run database seeding on startup
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    
-    // Automatically create database and run migrations on remote server
-    // await context.Database.MigrateAsync();
-
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    await DbInitializer.SeedAsync(context, userManager, roleManager);
-}
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -86,8 +72,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); // Process authentication cookies
-app.UseAuthorization();  // Check authorization roles
+app.UseAuthentication(); 
+app.UseAuthorization();  
 
 app.UseHangfireDashboard();
 
