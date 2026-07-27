@@ -54,10 +54,14 @@ namespace TuyenSinh.Services
                     int startRow = 7;
 
                     var existingToHops = await _context.ToHopMons.ToListAsync();
+                    var missingToHops = new HashSet<string>();
 
-                    _context.ToHopNganhs.RemoveRange(_context.ToHopNganhs);
-                    _context.Nganhs.RemoveRange(_context.Nganhs);
-                    await _context.SaveChangesAsync();
+                    using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
+                    {
+                        _context.ToHopNganhs.RemoveRange(_context.ToHopNganhs);
+                        _context.Nganhs.RemoveRange(_context.Nganhs);
+                        await _context.SaveChangesAsync();
 
                     for (int r = startRow; r <= totalRows; r++)
                     {
@@ -70,7 +74,8 @@ namespace TuyenSinh.Services
                         var heSoHbStr = worksheet.Cells[r, 5].Value?.ToString();
                         var toHopCodesStr = worksheet.Cells[r, 6].Value?.ToString()?.Trim();
                         var nguongDauVao = worksheet.Cells[r, 8].Value?.ToString()?.Trim();
-
+                        var dxt = worksheet.Cells[r, 9].Value?.ToString()?.Trim();
+                        var diemSanToan = worksheet.Cells[r, 10].Value?.ToString()?.Trim();
                         if (string.IsNullOrEmpty(maNganh) || string.IsNullOrEmpty(tenNganh)) continue;
 
                         float heSoThpt = 0;
@@ -85,7 +90,9 @@ namespace TuyenSinh.Services
                             HeSoTHPT = heSoThpt,
                             HeSoHB = heSoHb,
                             ToHopXetTuyen = toHopCodesStr,
-                            NgungDauVao = nguongDauVao
+                            NguongDauVao = nguongDauVao,
+                            DXT = decimal.TryParse(dxt, out var dxtValue) ? dxtValue : 0,
+                            DiemSanToan = decimal.TryParse(diemSanToan, out var diemValue) ? diemValue : 0
                         };
 
                         _context.Nganhs.Add(nganh);
@@ -102,28 +109,37 @@ namespace TuyenSinh.Services
                                 var toHop = existingToHops.FirstOrDefault(t => t.MaToHop.Trim().ToUpper() == code);
                                 if (toHop == null)
                                 {
-                                    toHop = new ToHopMon
-                                    {
-                                        MaToHop = code,
-                                        TenToHop = "Tổ hợp " + code
-                                    };
-                                    _context.ToHopMons.Add(toHop);
-                                    await _context.SaveChangesAsync();
-                                    existingToHops.Add(toHop);
+                                    missingToHops.Add(code);
                                 }
-
-                                var link = new ToHopNganh
+                                else
                                 {
-                                    MaNganhId = nganh.Id,
-                                    ToHopId = toHop.Id
-                                };
-                                _context.ToHopNganhs.Add(link);
+                                    var link = new ToHopNganh
+                                    {
+                                        MaNganhId = nganh.Id,
+                                        ToHopId = toHop.Id
+                                    };
+                                    _context.ToHopNganhs.Add(link);
+                                }
                             }
                         }
                     }
 
-                    await _context.SaveChangesAsync();
-                    return (true, "Nhập dữ liệu danh sách ngành tuyển sinh từ Excel thành công!");
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        if (missingToHops.Any())
+                        {
+                            var missingStr = string.Join(", ", missingToHops);
+                            return (false, $"Nhập dữ liệu hoàn tất. Tuy nhiên, các tổ hợp sau chưa tồn tại trong hệ thống và bị bỏ qua: {missingStr}");
+                        }
+
+                        return (true, "Nhập dữ liệu danh sách ngành tuyển sinh từ Excel thành công!");
+                    }
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)

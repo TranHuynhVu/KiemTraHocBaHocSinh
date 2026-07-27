@@ -20,7 +20,7 @@
                         <div class="form-text text-muted small">Tên hiển thị chính thức của môn học.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-weight-500">Trường dữ liệu trong Excel</label>
+                        <label class="form-label font-weight-500">Mã môn</label>
                         <input type="text" name="fieldName" class="form-control" placeholder="Ví dụ: VatLy" required />
                         <div class="form-text text-muted small">Từ khóa prefix của môn học trong Excel (vd: VatLyCN -> điền VatLy).</div>
                     </div>
@@ -46,7 +46,7 @@
                             <tr>
                                 <th class="ps-4 py-3" style="width: 80px;">ID</th>
                                 <th class="py-3">Tên môn học</th>
-                                <th class="py-3">Ánh xạ Excel</th>
+                                <th class="py-3">Mã môn</th>
                                 <th class="pe-4 py-3 text-end" style="width: 200px;">Thao tác</th>
                             </tr>
                         </thead>
@@ -98,7 +98,7 @@
                                                             <input type="text" name="tenMonHoc" value="@item.TenMonHoc" class="form-control" required />
                                                         </div>
                                                         <div class="mb-3">
-                                                            <label class="form-label font-weight-500">Trường dữ liệu trong Excel</label>
+                                                            <label class="form-label font-weight-500">Mã môn</label>
                                                             <input type="text" name="fieldName" value="@item.FieldName" class="form-control" required />
                                                         </div>
                                                     </div>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TuyenSinh.Models;
 using TuyenSinh.ViewModels;
 
 namespace TuyenSinh.Services
@@ -13,5 +14,7 @@ namespace TuyenSinh.Services
         Task DeleteExpiredFileAsync(string excelId);
         Task<string> LuuFileTamThoiAsync(IFormFile file);
         Task<KetQuaDoiChieu> DoiChieuHocBaVaNguyenVongAsync(string hocBaFileId, string nguyenVongFileId);
+        Task<KetQuaKiemTraDiemSan> KiemTraDiemSan(string maNganh, string fileId);
+        Task<List<Nganh>> LayDanhSachNganhAsync();
     }
 }

@@ -4,6 +4,8 @@ using Hangfire;
 using System.Globalization;
 using TuyenSinh.Data;
 using TuyenSinh.ViewModels;
+using TuyenSinh.Enums;
+using TuyenSinh.Models;
 
 namespace TuyenSinh.Services
 {
@@ -500,6 +502,165 @@ namespace TuyenSinh.Services
             return ketQua;
         }
 
+        public async Task<KetQuaKiemTraDiemSan> KiemTraDiemSan(string maNganh, string fileId)
+        {
+            var result = new KetQuaKiemTraDiemSan();
+
+            if (string.IsNullOrEmpty(fileId))
+            {
+                result.ThanhCong = false;
+                result.ThongBao = "Mã tệp Excel không hợp lệ.";
+                return result;
+            }
+
+            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads");
+            var filePath = System.IO.File.Exists(fileId) ? fileId : Path.Combine(uploadsFolder, fileId);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                result.ThanhCong = false;
+                result.ThongBao = "Tệp Excel không tồn tại trên hệ thống.";
+                return result;
+            }
+
+            List<KetQuaNguyenVongImport> danhSach;
+            try
+            {
+                danhSach = ReadKetQuaNguyenVongExcel(filePath);
+            }
+            catch (Exception ex)
+            {
+                result.ThanhCong = false;
+                result.ThongBao = "Có lỗi xảy ra khi đọc tệp Excel: " + ex.Message;
+                return result;
+            }
+
+            var danhSachNganh = await _context.Nganhs
+                .AsNoTracking()
+                .Include(n => n.ToHopNganhs)
+                    .ThenInclude(th => th.ToHopMon)
+                .ToListAsync();
+
+            var nganhDict = danhSachNganh
+                .Where(n => !string.IsNullOrEmpty(n.MaNganh))
+                .ToDictionary(n => n.MaNganh.Trim(), n => n, StringComparer.OrdinalIgnoreCase);
+
+            // Nếu người dùng chọn 1 ngành cụ thể, chỉ kiểm tra các học sinh thuộc ngành đó
+            if (!string.IsNullOrWhiteSpace(maNganh))
+            {
+                danhSach = danhSach
+                    .Where(r => !string.IsNullOrWhiteSpace(r.MaNganh) && r.MaNganh.Trim().Equals(maNganh.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            var danhSachKiemTra = new List<BaoCaoKiemTraDiemSanItem>();
+
+            foreach (var item in danhSach)
+            {
+                var ghiChuList = new List<string>();
+
+                // 1. Kiểm tra MaNganh có tồn tại trong hệ thống không
+                Nganh? nganh = null;
+                if (string.IsNullOrWhiteSpace(item.MaNganh))
+                {
+                    ghiChuList.Add("Mã ngành trống");
+                }
+                else if (!nganhDict.TryGetValue(item.MaNganh.Trim(), out nganh))
+                {
+                    ghiChuList.Add($"Mã ngành '{item.MaNganh}' không tồn tại trong hệ thống");
+                }
+                else
+                {
+                    // 2. Kiểm tra ToHop có trong ngành đó không
+                    if (string.IsNullOrWhiteSpace(item.ToHop))
+                    {
+                        ghiChuList.Add("Mã tổ hợp trống");
+                    }
+                    else
+                    {
+                        bool toHopValid = nganh.ToHopNganhs.Any(th => th.ToHopMon != null &&
+                            th.ToHopMon.MaToHop.Trim().Equals(item.ToHop.Trim(), StringComparison.OrdinalIgnoreCase));
+                        if (!toHopValid)
+                        {
+                            ghiChuList.Add($"Tổ hợp '{item.ToHop}' không thuộc ngành {nganh.MaNganh}");
+                        }
+                    }
+                }
+
+                // 3. Kiểm tra các điểm môn 1, 2, 3 HB và THPT có trường nào null không
+                string mon1Ten = string.IsNullOrWhiteSpace(item.Mon1) ? "Môn 1" : item.Mon1;
+                string mon2Ten = string.IsNullOrWhiteSpace(item.Mon2) ? "Môn 2" : item.Mon2;
+                string mon3Ten = string.IsNullOrWhiteSpace(item.Mon3) ? "Môn 3" : item.Mon3;
+
+                // Nếu HeSoHB > 0 hoặc không tìm thấy ngành, mới yêu cầu kiểm tra điểm học bạ
+                bool kiemTraHocBa = nganh == null || nganh.HeSoHB > 0;
+
+                if (kiemTraHocBa)
+                {
+                    if (item.DiemMon1HB == null) ghiChuList.Add($"Thiếu điểm HB môn {mon1Ten}");
+                    if (item.DiemMon2HB == null) ghiChuList.Add($"Thiếu điểm HB môn {mon2Ten}");
+                    if (item.DiemMon3HB == null) ghiChuList.Add($"Thiếu điểm HB môn {mon3Ten}");
+                }
+
+                if (item.DiemMon1THPT == null) ghiChuList.Add($"Thiếu điểm THPT môn {mon1Ten}");
+                if (item.DiemMon2THPT == null) ghiChuList.Add($"Thiếu điểm THPT môn {mon2Ten}");
+                if (item.DiemMon3THPT == null) ghiChuList.Add($"Thiếu điểm THPT môn {mon3Ten}");
+
+                // 4. Kiểm tra điểm xét tuyển của học sinh với DXT của ngành
+                if (nganh != null)
+                {
+                    if (nganh.DXT > 0 && (item.DiemXetTuyen == null || item.DiemXetTuyen < nganh.DXT))
+                    {
+                        ghiChuList.Add($"Điểm xét tuyển ({item.DiemXetTuyen ?? 0}) dưới điểm sàn ngành ({nganh.DXT})");
+                    }
+
+                    // 5. Kiểm tra điểm sàn Toán (nếu DiemSanToan > 0)
+                    if (nganh.DiemSanToan > 0)
+                    {
+                        if (item.DiemMon1THPT == null || item.DiemMon1THPT < nganh.DiemSanToan)
+                        {
+                            ghiChuList.Add($"Điểm THPT môn Toán ({item.DiemMon1THPT ?? 0}) dưới điểm sàn môn Toán ({nganh.DiemSanToan})");
+                        }
+                    }
+                }
+
+                // Nếu vi phạm điều kiện nào thì thêm vào danh sách
+                if (ghiChuList.Count > 0)
+                {
+                    danhSachKiemTra.Add(new BaoCaoKiemTraDiemSanItem
+                    {
+                        HoTen = item.HoTen,
+                        CCCD = item.CCCD,
+                        MaNganh = item.MaNganh ?? "",
+                        ToHop = item.ToHop ?? "",
+                        DiemXetTuyen = item.DiemXetTuyen ?? 0,
+                        DiemSan = nganh?.DXT ?? 0,
+                        DiemSanToan = nganh?.DiemSanToan ?? 0,
+                        GhiChu = string.Join("; ", ghiChuList)
+                    });
+                }
+            }
+
+            result.ThanhCong = true;
+            result.ThongBao = "Kiểm tra điểm sàn hoàn tất.";
+            result.TongSoThiSinh = danhSach.Count;
+            result.SoThiSinhKhongDat = danhSachKiemTra.Count;
+            result.SoThiSinhDat = Math.Max(0, result.TongSoThiSinh - result.SoThiSinhKhongDat);
+            result.DanhSachKiemTraDiemSan = danhSachKiemTra;
+
+            return result;
+        }
+
+        public async Task<List<Nganh>> LayDanhSachNganhAsync()
+        {
+            return await _context.Nganhs
+                .AsNoTracking()
+                .Include(n => n.ToHopNganhs)
+                    .ThenInclude(th => th.ToHopMon)
+                .ToListAsync();
+        }
+
         private List<HocBaTHPTImport> ParseExcelToList(string filePath, int? limit = null)
         {
             var list = new List<HocBaTHPTImport>();
@@ -629,39 +790,116 @@ namespace TuyenSinh.Services
 
             return list;
         }
+        public List<KetQuaNguyenVongImport> ReadKetQuaNguyenVongExcel(string filePath)
+        {
+            var list = new List<KetQuaNguyenVongImport>();
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            {
+                var sheet = package.Workbook.Worksheets[0];
+                int totalRows = sheet.Dimension.End.Row;
+                int startRow = 2; // Assuming row 1 is header
+
+                for (int r = startRow; r <= totalRows; r++)
+                {
+                    var item = new KetQuaNguyenVongImport
+                    {
+                        HoTen = ParseString(sheet.Cells[r, 1].Value) ?? "",
+                        CCCD = ParseString(sheet.Cells[r, 2].Value) ?? "",
+                        NgaySinh = ParseDateTime(sheet.Cells[r, 3].Value) ?? default,
+                        NamTN = ParseInt(sheet.Cells[r, 4].Value) ?? 0,
+                        DTUT = ParseString(sheet.Cells[r, 5].Value),
+                        KVUT = ParseString(sheet.Cells[r, 6].Value),
+                        HocLuc = ParseString(sheet.Cells[r, 7].Value),
+                        DiemXetTN = ParseString(sheet.Cells[r, 8].Value),
+                        ThuTuNV = ParseInt(sheet.Cells[r, 9].Value),
+                        MaTruong = ParseString(sheet.Cells[r, 10].Value),
+                        MaNganh = ParseString(sheet.Cells[r, 11].Value),
+                        PTXT = ParseString(sheet.Cells[r, 12].Value),
+                        ToHop = ParseString(sheet.Cells[r, 13].Value),
+
+                        Mon1 = ParseString(sheet.Cells[r, 14].Value),
+                        TrongSoMon1 = ParseDecimal(sheet.Cells[r, 15].Value),
+                        DiemMon1HB = ParseDecimal(sheet.Cells[r, 16].Value),
+                        DiemMon1THPT = ParseDecimal(sheet.Cells[r, 17].Value),
+
+                        Mon2 = ParseString(sheet.Cells[r, 18].Value),
+                        TrongSoMon2 = ParseDecimal(sheet.Cells[r, 19].Value),
+                        DiemMon2HB = ParseDecimal(sheet.Cells[r, 20].Value),
+                        DiemMon2THPT = ParseDecimal(sheet.Cells[r, 21].Value),
+
+                        Mon3 = ParseString(sheet.Cells[r, 22].Value),
+                        TrongSoMon3 = ParseDecimal(sheet.Cells[r, 23].Value),
+                        DiemMon3HB = ParseDecimal(sheet.Cells[r, 24].Value),
+                        DiemMon3THPT = ParseDecimal(sheet.Cells[r, 25].Value),
+
+                        TrongSoHB = ParseDecimal(sheet.Cells[r, 26].Value),
+                        TrongSoTHPT = ParseDecimal(sheet.Cells[r, 27].Value),
+                        DiemCong = ParseDecimal(sheet.Cells[r, 28].Value),
+                        DiemUuTien = ParseDecimal(sheet.Cells[r, 29].Value),
+                        DS = ParseDecimal(sheet.Cells[r, 30].Value),
+                        TDHB = ParseDecimal(sheet.Cells[r, 31].Value),
+                        TDTHPT = ParseDecimal(sheet.Cells[r, 32].Value),
+                        TD = ParseDecimal(sheet.Cells[r, 33].Value),
+                        DiemXetTuyen = ParseDecimal(sheet.Cells[r, 34].Value),
+                        KQKiemTraNguong = ParseString(sheet.Cells[r, 35].Value)?.Trim().Equals("Đạt", StringComparison.OrdinalIgnoreCase) ?? false,
+                        GhiChu = ParseString(sheet.Cells[r, 36].Value)
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(item.CCCD) && !string.IsNullOrWhiteSpace(item.HoTen))
+                    {
+                        list.Add(item);
+                    }
+                }
+            }
+
+            return list;
+        }
         private decimal? GetScore(HocBaTHPTImport record, string fieldName)
         {
-            return fieldName.ToLower() switch
+            if (Enum.TryParse<MaMonHoc>(fieldName.ToUpper(), out var maMon))
             {
-                "toan" => record.ToanCN,
-                "van" => record.VanCN,
-                "vatly" => record.VatLyCN,
-                "hoahoc" => record.HoaHocCN,
-                "sinhhoc" => record.SinhHocCN,
-                "dialy" => record.DiaLyCN,
-                "tinhoc" => record.TinHocCN,
-                "cncn" => record.CNCNCN,
-                "ngoaingu" => record.NgoaiNguCN,
-                _ => null
-            };
+                return maMon switch
+                {
+                    MaMonHoc.TO => record.ToanCN,
+                    MaMonHoc.VA => record.VanCN,
+                    MaMonHoc.LI => record.VatLyCN,
+                    MaMonHoc.HO => record.HoaHocCN,
+                    MaMonHoc.SI => record.SinhHocCN,
+                    MaMonHoc.SU => record.LichSuCN,
+                    MaMonHoc.DI => record.DiaLyCN,
+                    MaMonHoc.GD => record.GDCDCN,
+                    MaMonHoc.TI => record.TinHocCN,
+                    MaMonHoc.CN => record.CNCNCN,
+                    MaMonHoc.NN => record.NgoaiNguCN,
+                    _ => null
+                };
+            }
+            return null;
         }
 
         private string LayTenHienThiMonHocCN(string fieldName)
         {
-            return fieldName.ToLower() switch
+            if (Enum.TryParse<MaMonHoc>(fieldName.ToUpper(), out var maMon))
             {
-                "toan" => "Toán CN",
-                "van" => "Văn CN",
-                "vatly" => "Vật lí CN",
-                "hoahoc" => "Hóa học CN",
-                "sinhhoc" => "Sinh học CN",
-                "dialy" => "Địa lí CN",
-                "tinhoc" => "Tin học CN",
-                "cncn" => "CNCN CN",
-                "ngoaingu" => "Ngoại ngữ CN",
-                _ => fieldName + " CN"
-            };
+                return maMon switch
+                {
+                    MaMonHoc.TO => "Toán CN",
+                    MaMonHoc.VA => "Văn CN",
+                    MaMonHoc.LI => "Vật lí CN",
+                    MaMonHoc.HO => "Hóa học CN",
+                    MaMonHoc.SI => "Sinh học CN",
+                    MaMonHoc.SU => "Lịch sử CN",
+                    MaMonHoc.DI => "Địa lí CN",
+                    MaMonHoc.GD => "GDCD CN",
+                    MaMonHoc.TI => "Tin học CN",
+                    MaMonHoc.CN => "Công nghệ CN",
+                    MaMonHoc.NN => "Ngoại ngữ CN",
+                    _ => fieldName + " CN"
+                };
+            }
+            return fieldName + " CN";
         }
 
         private int? ParseInt(object? val)

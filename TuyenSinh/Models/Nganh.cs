@@ -9,8 +9,10 @@ namespace TuyenSinh.Models
         public string TenNganh { get; set; } = null!;
         public float HeSoTHPT { get; set; }
         public float HeSoHB { get; set; }
-        public string? ToHopXetTuyen { get; set; }
-        public string? NgungDauVao { get; set; }
+        public string ToHopXetTuyen { get; set; }
+        public string NguongDauVao { get; set; }
+        public decimal DXT { get; set; }
+        public decimal DiemSanToan { get; set; }
 
         public virtual ICollection<ToHopNganh> ToHopNganhs { get; set; } = new List<ToHopNganh>();
     }

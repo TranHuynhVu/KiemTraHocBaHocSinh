@@ -235,5 +235,107 @@ namespace TuyenSinh.Controllers
             var bytes = package.GetAsByteArray();
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DoiChieu_HocBa_NguyenVong.xlsx");
         }
+
+        [HttpGet("kiem-tra-diem-san")]
+        public async Task<IActionResult> KiemTraDiemSan()
+        {
+            var dsNganh = await _hocBaService.LayDanhSachNganhAsync();
+            ViewBag.DanhSachNganh = dsNganh;
+            return View("KiemTraDiemSan");
+        }
+
+        [HttpPost("ket-qua-kiem-tra-diem-san")]
+        public async Task<IActionResult> NopFileKiemTraDiemSan(string maNganh, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn file kiểm tra điểm sàn.";
+                return RedirectToAction("KiemTraDiemSan");
+            }
+
+            try
+            {
+                var fileId = await _hocBaService.LuuFileTamThoiAsync(file);
+                ViewBag.FileId = fileId;
+                ViewBag.MaNganh = maNganh ?? "";
+                
+                var dsNganh = await _hocBaService.LayDanhSachNganhAsync();
+                var nganhChon = dsNganh.FirstOrDefault(n => n.MaNganh == maNganh);
+                ViewBag.TenNganh = nganhChon != null ? nganhChon.TenNganh : "Tất cả các ngành";
+
+                return View("KetQuaKiemTraDiemSan", new KetQuaKiemTraDiemSan());
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi nạp file: " + ex.Message;
+                return RedirectToAction("KiemTraDiemSan");
+            }
+        }
+
+        [HttpGet("lay-ket-qua-kiem-tra-diem-san")]
+        public async Task<IActionResult> LayKetQuaKiemTraDiemSan(string maNganh, string fileId)
+        {
+            if (string.IsNullOrEmpty(fileId))
+            {
+                return Json(new { success = false, message = "Yêu cầu không hợp lệ." });
+            }
+
+            var result = await _hocBaService.KiemTraDiemSan(maNganh, fileId);
+
+            return Json(new
+            {
+                success = result.ThanhCong,
+                message = result.ThongBao,
+                tongSoThiSinh = result.TongSoThiSinh,
+                soThiSinhDat = result.SoThiSinhDat,
+                soThiSinhKhongDat = result.SoThiSinhKhongDat,
+                data = result.DanhSachKiemTraDiemSan
+            });
+        }
+
+        [HttpGet("xuat-excel-kiem-tra-diem-san")]
+        public async Task<IActionResult> XuatExcelKiemTraDiemSan(string maNganh, string fileId)
+        {
+            if (string.IsNullOrEmpty(fileId))
+                return BadRequest("Yêu cầu không hợp lệ.");
+
+            var result = await _hocBaService.KiemTraDiemSan(maNganh, fileId);
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Kiểm tra điểm sàn");
+
+            string[] headers = { "STT", "Họ và Tên", "Số ĐDCN (CCCD)", "Mã Ngành", "Tổ Hợp", "Điểm Xét Tuyển", "Điểm Sàn Ngành", "Điểm Sàn Toán", "Ghi Chú Lỗi" };
+            for (int c = 0; c < headers.Length; c++)
+                ws.Cells[1, c + 1].Value = headers[c];
+
+            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+            }
+
+            int row = 2;
+            int stt = 1;
+            foreach (var item in result.DanhSachKiemTraDiemSan)
+            {
+                ws.Cells[row, 1].Value = stt++;
+                ws.Cells[row, 2].Value = item.HoTen;
+                ws.Cells[row, 3].Value = item.CCCD;
+                ws.Cells[row, 4].Value = item.MaNganh;
+                ws.Cells[row, 5].Value = item.ToHop;
+                ws.Cells[row, 6].Value = item.DiemXetTuyen;
+                ws.Cells[row, 7].Value = item.DiemSan;
+                ws.Cells[row, 8].Value = item.DiemSanToan;
+                ws.Cells[row, 9].Value = item.GhiChu;
+                row++;
+            }
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KetQua_KiemTra_DiemSan.xlsx");
+        }
     }
 }

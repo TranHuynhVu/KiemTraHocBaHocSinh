@@ -79,5 +79,25 @@ namespace TuyenSinh.ViewModels
         public List<string> DanhSachMaNganhKhongTim { get; set; } = new();
         public List<KetQuaDoiChieuItem> DanhSachThieuDiem { get; set; } = new();
     }
-}
 
+    public class BaoCaoKiemTraDiemSanItem
+    {
+        public string HoTen { get; set; }
+        public string CCCD { get; set; }
+        public string MaNganh { get; set; }
+        public string ToHop { get; set; }
+        public decimal DiemXetTuyen { get; set; }
+        public decimal DiemSan { get; set; }
+        public decimal DiemSanToan { get; set; }
+        public string GhiChu { get; set; }
+    }
+    public class KetQuaKiemTraDiemSan
+    {
+        public bool ThanhCong { get; set; }
+        public string? ThongBao { get; set; }
+        public int TongSoThiSinh { get; set; }
+        public int SoThiSinhDat { get; set; }
+        public int SoThiSinhKhongDat { get; set; }
+        public List<BaoCaoKiemTraDiemSanItem> DanhSachKiemTraDiemSan { get; set; } = new();
+    }
+}

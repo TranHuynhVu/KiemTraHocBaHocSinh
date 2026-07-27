@@ -6,6 +6,7 @@
     --text-main: #1d1d1f;
     --text-muted: #6e6e73;
     --sidebar-width: 270px;
+    --border-radius: 5px;
 }
 
 body {
@@ -17,6 +18,13 @@ body {
     overflow-x: hidden;
 }
 
+.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+.border-radius{
+    border-radius: var(--border-radius) !important;
+}
 /* Sidebar Styling */
 #sidebar {
     width: var(--sidebar-width);
@@ -210,13 +218,16 @@ body {
     color: #ffffff;
 }
 
-.form-control {
+.form-control,
+.form-select {
     border-radius: 5px;
     border: 1px solid #d1d1d6;
     padding: 10px 14px;
+    font-size: 0.9rem;
 }
 
-.form-control:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
 }
@@ -571,4 +582,49 @@ table.dataTable tbody td {
     box-shadow: none;
     cursor: not-allowed;
     transform: none;
+}
+
+/* === Common Utility Classes === */
+.border-bottom-light {
+    border-bottom: 1px solid #e5e5ea !important;
+}
+
+.rounded-3 { border-radius: 3px !important; }
+.rounded-4 { border-radius: 4px !important; }
+.rounded-5 { border-radius: 5px !important; }
+.rounded-6 { border-radius: 6px !important; }
+.rounded-8 { border-radius: 8px !important; }
+.rounded-10 { border-radius: 10px !important; }
+.rounded-12 { border-radius: 12px !important; }
+
+/* === Common Shared Dropzone Component === */
+.custom-dropzone {
+    border: 2px dashed #d1d1d6;
+    border-radius: 10px;
+    padding: 35px 20px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #fafafa;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.custom-dropzone:hover,
+.custom-dropzone.dragover {
+    border-color: var(--primary-color);
+    background-color: #f5fafd;
+}
+
+/* === Select2 Custom Styling === */
+.select2-container--bootstrap-5 .select2-selection {
+    border-color: #d1d1d6;
+    border-radius: 8px !important;
+    min-height: 42px;
+    padding-top: 4px;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5.select2-container--open .select2-selection {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
 }

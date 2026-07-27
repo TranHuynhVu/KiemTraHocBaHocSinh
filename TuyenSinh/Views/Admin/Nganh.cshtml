@@ -12,8 +12,8 @@
                 <h5 class="mb-0 font-weight-700 major-title">
                     <i class="fa-solid fa-graduation-cap text-primary me-2"></i>Danh sách ngành tuyển sinh
                 </h5>
-                <div class="d-flex gap-2">
-                    <span class="badge bg-primary px-3 py-2 rounded-pill d-flex align-items-center badge-count">@Model.Count() Ngành học</span>
+                <div class="d-flex gap-2"> 
+                    <span class="badge bg-primary px-3 py-2 rounded-pill d-flex align-items-center badge-count border-radius">@Model.Count() Ngành học</span>
                     <button class="btn btn-primary btn-sm px-3 btn-import-excel" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="fa-solid fa-file-excel me-1"></i> Nhập Excel ngành
                     </button>
@@ -69,7 +69,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-warning text-dark px-2 py-1 badge-gate-score">
-                                            @item.NgungDauVao
+                                            @item.NguongDauVao
                                         </span>
                                     </td>
                                 </tr>

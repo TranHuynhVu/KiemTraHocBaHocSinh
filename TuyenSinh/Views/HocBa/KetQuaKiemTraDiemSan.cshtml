@@ -1,0 +1,101 @@
+@model TuyenSinh.ViewModels.KetQuaKiemTraDiemSan
+@{
+    ViewData["Title"] = "Kết quả kiểm tra điểm sàn";
+    ViewData["PageTitle"] = "Kết quả kiểm tra điểm sàn tuyển sinh";
+    Layout = "_AdminLayout";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h4 class="mb-1 doichieu-page-title">Kết quả kiểm tra điểm sàn tuyển sinh</h4>
+        @if (!string.IsNullOrEmpty(ViewBag.MaNganh))
+        {
+            <strong class="fw-bold">[@ViewBag.MaNganh] @ViewBag.TenNganh</strong>
+        }
+        else
+        {
+            <strong class="fw-bold">@ViewBag.TenNganh</strong>
+        }
+        <p class="text-muted small mb-0">Danh sách các thí sinh bị vi phạm các điều kiện về điểm sàn, thiếu điểm môn hoặc sai tổ hợp/mã ngành.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="/admin/hoc-ba/kiem-tra-diem-san" class="btn btn-outline-secondary btn-sm px-3 rounded-6">
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại nạp tệp
+        </a>
+    </div>
+</div>
+
+<!-- Thống kê -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3 rounded-8">
+            <div class="doichieu-stat-value text-primary" id="statTongSo">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Tổng số học sinh kiểm tra</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3 rounded-8">
+            <div class="doichieu-stat-value text-success" id="statTongDat">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Số học sinh ĐẠT</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center py-3 rounded-8">
+            <div class="doichieu-stat-value text-danger" id="statTongLoi">
+                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            </div>
+            <div class="doichieu-stat-label">Số học sinh KHÔNG ĐẠT</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm rounded-8">
+    <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between border-bottom-light">
+        <h5 class="mb-0 doichieu-card-title">
+            <i class="fa-solid fa-table-list text-danger me-2"></i>Danh sách thí sinh không đạt điều kiện kiểm tra
+        </h5>
+        <div class="d-flex gap-2">
+            <button id="btnExportExcel" class="btn btn-success btn-sm px-3 rounded-6">
+                <i class="fa-solid fa-file-excel me-1"></i>Xuất Excel
+            </button>
+            <button id="btnExportCsv" class="btn btn-outline-secondary btn-sm px-3 rounded-6">
+                <i class="fa-solid fa-file-csv me-1"></i>Xuất CSV
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="diemSanTable" class="table table-striped table-bordered w-100">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">STT</th>
+                        <th style="width: 140px;">Họ và Tên</th>
+                        <th style="width: 120px;">Số ĐDCN (CCCD)</th>
+                        <th style="width: 90px;">Mã ngành</th>
+                        <th style="width: 80px;">Tổ hợp</th>
+                        <th style="width: 100px;">Điểm xét tuyển</th>
+                        <th style="width: 100px;">Điểm sàn</th>
+                        <th style="width: 110px;">Điểm sàn Toán</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loaded dynamically via AJAX DataTable -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const maNganh = '@ViewBag.MaNganh';
+        const fileId = '@ViewBag.FileId';
+    </script>
+    <script src="~/js/hocba/ketquakiemtradiemsan.js" asp-append-version="true"></script>
+}
