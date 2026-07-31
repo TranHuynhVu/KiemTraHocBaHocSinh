@@ -336,7 +336,6 @@ namespace TuyenSinh.Services
             }
 
             // Group học bạ theo CCCD, lấy từng năm 10, 11, 12
-            var groupStart = DateTime.Now;
             var hocBaTheoCccd = danhSachHocBa
                 .GroupBy(r => r.SoDDCN)
                 .ToDictionary(g => g.Key!, g => g.ToList());
@@ -394,95 +393,123 @@ namespace TuyenSinh.Services
                 .Where(n => !string.IsNullOrEmpty(n.MaNganh))
                 .ToDictionary(n => n.MaNganh!.Trim(), n => n, StringComparer.OrdinalIgnoreCase);
 
-            // 4. Xử lý từng nguyện vọng Group theo CCCD
-            var processingStart = DateTime.Now;
+            // 4. Xử lý từng nguyện vọng
             var maNganhKhongTimThay = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var danhSachTam = new List<KetQuaDoiChieuItem>();
             var thiSinhKhongHocBa = new HashSet<string>();
+            var listNVThongKe = new List<(string Cccd, int ThuTuNV, string MaNganh, string TenNganh, string Loai)>();
 
-            // Group nguyện vọng theo CCCD
-            var nvTheoCccd = danhSachNV
-                .GroupBy(nv => nv.SoDDCN!)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            foreach (var kvp in nvTheoCccd)
+            foreach (var nv in danhSachNV)
             {
-                var cccd = kvp.Key;
-                var listNV = kvp.Value;
+                var cccd = nv.SoDDCN!;
+                var thuTuNV = nv.ThuTuNV;
+                var maNganh = nv.MaXetTuyen!.Trim();
+                var tenNganh = nv.TenNganh ?? string.Empty;
 
-                // Lấy học bạ của thí sinh bằng Dictionary
-                if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
+                // 1. Kiểm tra mã ngành trong DB
+                if (nganhDict.TryGetValue(maNganh, out var nganhEntity))
                 {
-                    thiSinhKhongHocBa.Add(cccd);
+                    if (!string.IsNullOrEmpty(nganhEntity.TenNganh))
+                        tenNganh = nganhEntity.TenNganh;
+
+                    // Nếu ngành có HeSoHB == 0 (chỉ xét điểm THPT) -> bỏ qua đối chiếu học bạ
+                    if (nganhEntity.HeSoHB == 0)
+                    {
+                        listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "BoQua"));
+                        continue;
+                    }
+                }
+                else
+                {
+                    maNganhKhongTimThay.Add(maNganh);
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
                     continue;
                 }
 
-                var tenHoVaTen = hocBaThiSinh.FirstOrDefault()?.HoVaTen;
+                // 2. Kiểm tra thí sinh có trong file học bạ không
+                if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
+                {
+                    thiSinhKhongHocBa.Add(cccd);
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongHocBa"));
+                    continue;
+                }
 
-                // Lấy record theo từng năm của thí sinh này một lần duy nhất
+                var hoVaTen = hocBaThiSinh.FirstOrDefault()?.HoVaTen ?? string.Empty;
                 var lopHB10 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 10);
                 var lopHB11 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 11);
                 var lopHB12 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 12);
+                var cacNamRecord = new[] {
+                    (Nam: "Lớp 10", Record: lopHB10),
+                    (Nam: "Lớp 11", Record: lopHB11),
+                    (Nam: "Lớp 12", Record: lopHB12)
+                };
 
-                foreach (var nv in listNV)
+                if (nganhEntity.ToHopNganhs == null || !nganhEntity.ToHopNganhs.Any())
                 {
-                    var maNganh = nv.MaXetTuyen!.Trim();
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
+                    continue;
+                }
 
-                    // Tìm ngành
-                    if (!nganhDict.TryGetValue(maNganh, out var nganh))
+                // 3. Kiểm tra các tổ hợp môn của ngành
+                bool hasAnyValidToHop = false;
+                bool hasAnyScoreData = false;
+
+                foreach (var toHopNganh in nganhEntity.ToHopNganhs)
+                {
+                    var toHop = toHopNganh.ToHopMon;
+                    if (toHop == null || toHop.MonHocs == null || !toHop.MonHocs.Any()) continue;
+
+                    bool toHopDu = true;
+                    foreach (var (namHoc, record) in cacNamRecord)
                     {
-                        maNganhKhongTimThay.Add(maNganh);
-                        continue;
-                    }
-
-                    // Nếu ngành có HeSoHB == 0 (chỉ xét điểm THPT), bỏ qua không tạo dòng chi tiết lỗi học bạ!
-                    if (nganh.HeSoHB == 0)
-                    {
-                        continue;
-                    }
-
-                    // Kiểm tra mỗi tổ hợp của ngành
-                    foreach (var toHopNganh in nganh.ToHopNganhs)
-                    {
-                        var toHop = toHopNganh.ToHopMon;
-                        if (toHop == null) continue;
-
-                        // Kiểm tra từng môn trong tổ hợp, theo từng năm
-                        var cacNamRecord = new[] {
-                            (Nam: "Lớp 10", Record: lopHB10),
-                            (Nam: "Lớp 11", Record: lopHB11),
-                            (Nam: "Lớp 12", Record: lopHB12)
-                        };
-
-                        foreach (var (namHoc, record) in cacNamRecord)
+                        var cacMonThieuTrongNam = new List<string>();
+                        foreach (var monHoc in toHop.MonHocs)
                         {
-                            var cacMonThieu = new List<string>();
-
-                            foreach (var monHoc in toHop.MonHocs)
+                            decimal? diem = record == null ? null : GetScore(record, monHoc.FieldName);
+                            if (diem != null)
                             {
-                                decimal? diem = record == null ? null : GetScore(record, monHoc.FieldName);
-                                if (diem == null)
-                                {
-                                    cacMonThieu.Add(LayTenHienThiMonHocCN(monHoc.FieldName));
-                                }
+                                hasAnyScoreData = true;
                             }
-
-                            if (cacMonThieu.Count > 0)
+                            else
                             {
-                                danhSachTam.Add(new KetQuaDoiChieuItem
-                                {
-                                    SoDDCN = cccd,
-                                    HoVaTen = tenHoVaTen,
-                                    ThuTuNV = nv.ThuTuNV,
-                                    MaNganh = nganh.MaNganh,
-                                    TenNganh = nganh.TenNganh,
-                                    MaToHop = toHop.MaToHop,
-                                    NamHoc = namHoc,
-                                    MonThieu = string.Join(", ", cacMonThieu)
-                                });
+                                toHopDu = false;
+                                cacMonThieuTrongNam.Add(LayTenHienThiMonHocCN(monHoc.FieldName));
                             }
                         }
+
+                        if (cacMonThieuTrongNam.Count > 0)
+                        {
+                            danhSachTam.Add(new KetQuaDoiChieuItem
+                            {
+                                SoDDCN = cccd,
+                                HoVaTen = hoVaTen,
+                                ThuTuNV = thuTuNV,
+                                MaNganh = nganhEntity.MaNganh,
+                                TenNganh = nganhEntity.TenNganh,
+                                MaToHop = toHop.MaToHop,
+                                NamHoc = namHoc,
+                                MonThieu = string.Join(", ", cacMonThieuTrongNam)
+                            });
+                        }
                     }
+
+                    if (toHopDu)
+                    {
+                        hasAnyValidToHop = true;
+                    }
+                }
+
+                if (hasAnyValidToHop)
+                {
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "CoToHopDu"));
+                }
+                else if (!hasAnyScoreData)
+                {
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
+                }
+                else
+                {
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "ThieuMoiToHop"));
                 }
             }
 
@@ -507,98 +534,6 @@ namespace TuyenSinh.Services
             foreach (var item in ketQuaThieuDiem)
             {
                 item.Stt = stt++;
-            }
-
-            // Dữ liệu phục vụ 2 bảng thống kê
-            var listNVThongKe = new List<(string Cccd, int ThuTuNV, string MaNganh, string TenNganh, string Loai)>();
-
-            foreach (var nv in danhSachNV)
-            {
-                var cccd = nv.SoDDCN!;
-                var thuTuNV = nv.ThuTuNV;
-                var maNganh = nv.MaXetTuyen!.Trim();
-                var tenNganh = nv.TenNganh ?? string.Empty;
-
-                if (nganhDict.TryGetValue(maNganh, out var nganhEntity))
-                {
-                    if (!string.IsNullOrEmpty(nganhEntity.TenNganh))
-                        tenNganh = nganhEntity.TenNganh;
-
-                    // Nếu ngành có HeSoHB == 0 (chỉ xét điểm THPT) -> bỏ qua đối chiếu học bạ
-                    if (nganhEntity.HeSoHB == 0)
-                    {
-                        listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "BoQua"));
-                        continue;
-                    }
-                }
-
-                // Nếu thí sinh không có file học bạ
-                if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
-                {
-                    thiSinhKhongHocBa.Add(cccd);
-                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongHocBa"));
-                    continue;
-                }
-
-                // Có học bạ -> lấy điểm theo các lớp
-                var lopHB10 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 10);
-                var lopHB11 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 11);
-                var lopHB12 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 12);
-                var cacNamRecord = new[] { lopHB10, lopHB11, lopHB12 };
-
-                if (nganhEntity == null || nganhEntity.ToHopNganhs == null || !nganhEntity.ToHopNganhs.Any())
-                {
-                    maNganhKhongTimThay.Add(maNganh);
-                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
-                    continue;
-                }
-
-                bool hasAnyValidToHop = false;
-                bool hasAnyScoreData = false;
-
-                foreach (var toHopNganh in nganhEntity.ToHopNganhs)
-                {
-                    var toHop = toHopNganh.ToHopMon;
-                    if (toHop == null || toHop.MonHocs == null || !toHop.MonHocs.Any()) continue;
-
-                    bool toHopDu = true;
-                    foreach (var record in cacNamRecord)
-                    {
-                        foreach (var monHoc in toHop.MonHocs)
-                        {
-                            decimal? diem = record == null ? null : GetScore(record, monHoc.FieldName);
-                            if (diem != null)
-                            {
-                                hasAnyScoreData = true;
-                            }
-                            else
-                            {
-                                toHopDu = false;
-                            }
-                        }
-                    }
-
-                    if (toHopDu)
-                    {
-                        hasAnyValidToHop = true;
-                    }
-                }
-
-                if (hasAnyValidToHop)
-                {
-                    // Có ít nhất 1 tổ hợp đạt đủ điểm ở 3 năm
-                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "CoToHopDu"));
-                }
-                else if (!hasAnyScoreData)
-                {
-                    // Có file học bạ nhưng bỏ trống toàn bộ điểm CN
-                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
-                }
-                else
-                {
-                    // Có điểm học bạ nhưng tất cả các tổ hợp của ngành đều bị thiếu điểm
-                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "ThieuMoiToHop"));
-                }
             }
 
             var thongKeTongHop = new ThongKeTongHopViewModel
