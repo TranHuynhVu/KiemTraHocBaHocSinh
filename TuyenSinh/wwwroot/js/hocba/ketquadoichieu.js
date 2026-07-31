@@ -1,7 +1,6 @@
 $(document).ready(function () {
     let lastResultData = [];
 
-    // Initialize DataTables calling AJAX API matching Preview mode
     const table = $('#doiChieuTable').DataTable({
         ajax: {
             url: `/admin/hoc-ba/lay-ket-qua-doi-chieu?hocBaFileId=${hocBaFileId}&nguyenVongFileId=${nguyenVongFileId}`,
@@ -13,7 +12,6 @@ $(document).ready(function () {
                     return [];
                 }
 
-                // Save data for client-side export
                 lastResultData = json.data || [];
                 $('#badgeTongDongChiTietLoi').text((lastResultData.length || 0).toLocaleString() + ' dòng');
 
@@ -21,53 +19,51 @@ $(document).ready(function () {
                 $('#summaryLoading').addClass('d-none');
                 $('#summaryContent').removeClass('d-none');
 
-                const th = json.thongKeTongHop || json.ThongKeTongHop || {};
-                $('#statTongDongNV').text((th.tongDongNguyenVong || th.TongDongNguyenVong || 0).toLocaleString());
-                $('#statTongThiSinh').text((th.tongThiSinhDuyNhat || th.TongThiSinhDuyNhat || 0).toLocaleString());
-                $('#statNVCoToHopDu').text((th.nguyenVongCoToHopDu || th.NguyenVongCoToHopDu || 0).toLocaleString());
-                $('#statNVThieuMoiToHop').text((th.nguyenVongThieuMoiToHop || th.NguyenVongThieuMoiToHop || 0).toLocaleString());
-                $('#statNVKhongHocBa').text((th.nguyenVongKhongHocBa || th.NguyenVongKhongHocBa || 0).toLocaleString());
-                $('#statNVKhongDiemCN').text((th.nguyenVongKhongDiemCN || th.NguyenVongKhongDiemCN || 0).toLocaleString());
-                $('#statNguyenVongBoQua').text((th.nguyenVongBoQua || th.NguyenVongBoQua || 0).toLocaleString());
+                const th = json.thongKeTongHop || {};
+                $('#statTongDongNV').text((th.TongDongNguyenVong || 0).toLocaleString());
+                $('#statTongThiSinh').text((th.TongThiSinhDuyNhat || 0).toLocaleString());
+                $('#statNVCoToHopDu').text((th.NguyenVongCoToHopDu || 0).toLocaleString());
+                $('#statNVThieuMoiToHop').text((th.NguyenVongThieuMoiToHop || 0).toLocaleString());
+                $('#statNVKhongHocBa').text((th.NguyenVongKhongHocBa || 0).toLocaleString());
+                $('#statNVKhongDiemCN').text((th.NguyenVongKhongDiemCN || 0).toLocaleString());
+                $('#statNguyenVongBoQua').text((th.NguyenVongBoQua || 0).toLocaleString());
 
-                // Store category lists globally for Modal & export
                 window.groupLists = {
-                    ThieuMoiToHop: th.danhSachThieuMoiToHop || th.DanhSachThieuMoiToHop || [],
-                    KhongHocBa:    th.danhSachKhongHocBa    || th.DanhSachKhongHocBa    || [],
-                    KhongDiemCN:   th.danhSachKhongDiemCN   || th.DanhSachKhongDiemCN   || [],
-                    BoQua:         th.danhSachBoQua          || th.DanhSachBoQua          || []
+                    ThieuMoiToHop: th.DanhSachThieuMoiToHop || [],
+                    KhongHocBa: th.DanhSachKhongHocBa || [],
+                    KhongDiemCN: th.DanhSachKhongDiemCN || [],
+                    BoQua: th.DanhSachBoQua || []
                 };
 
                 // 2. Render Table 2: Thống kê theo ngành
                 $('#tableNganhLoading').addClass('d-none');
                 $('#tableNganhContent').removeClass('d-none');
 
-                const dsNganh = json.thongKeTheoNganh || json.ThongKeTheoNganh || [];
+                const dsNganh = json.thongKeTheoNganh || [];
 
-                // Store per-ngành detail lists for modal (keyed by maXetTuyen)
                 window.nganhGroupLists = {};
                 dsNganh.forEach(function (item) {
-                    const ma = item.maXetTuyen || item.MaXetTuyen || '';
+                    const ma = item.MaXetTuyen || '';
                     window.nganhGroupLists[ma] = {
-                        ThieuMoiToHop: item.danhSachThieuMoiToHop || item.DanhSachThieuMoiToHop || [],
-                        KhongHocBa:    item.danhSachKhongHocBa    || item.DanhSachKhongHocBa    || [],
-                        KhongDiemCN:   item.danhSachKhongDiemCN   || item.DanhSachKhongDiemCN   || []
+                        ThieuMoiToHop: item.DanhSachThieuMoiToHop || [],
+                        KhongHocBa: item.DanhSachKhongHocBa || [],
+                        KhongDiemCN: item.DanhSachKhongDiemCN || []
                     };
                 });
 
                 if (dsNganh.length > 0) {
                     const rowsHtml = dsNganh.map(function (item) {
-                        const ma = item.maXetTuyen || item.MaXetTuyen || '';
-                        const ten = item.tenNganh || item.TenNganh || '';
-                        const tongNV = (item.tongNV || item.TongNV || 0).toLocaleString();
-                        const soThiSinh = (item.soThiSinh || item.SoThiSinh || 0).toLocaleString();
-                        const nvCoToHopDu = (item.nvCoToHopDu || item.NVCoToHopDu || 0).toLocaleString();
+                        const ma = item.MaXetTuyen || '';
+                        const ten = item.TenNganh || '';
+                        const tongNV = (item.TongNV || 0).toLocaleString();
+                        const soThiSinh = (item.SoThiSinh || 0).toLocaleString();
+                        const nvCoToHopDu = (item.NVCoToHopDu || 0).toLocaleString();
 
-                        const rawThieu  = item.nvThieuMoiToHop || item.NVThieuMoiToHop || 0;
-                        const rawDiemCN = item.nvKhongDiemCN   || item.NVKhongDiemCN   || 0;
-                        const rawHocBa  = item.nvKhongHocBa    || item.NVKhongHocBa    || 0;
+                        const rawThieu = item.NVThieuMoiToHop || 0;
+                        const rawDiemCN = item.NVKhongDiemCN || 0;
+                        const rawHocBa = item.NVKhongHocBa || 0;
 
-                        const valTyLe = (item.tyLeThieu !== undefined ? item.tyLeThieu : item.TyLeThieu) || 0;
+                        const valTyLe = item.TyLeThieu || 0;
                         const tyLeThieu = valTyLe.toFixed(2) + '%';
                         const badgeClass = valTyLe > 0 ? 'text-danger fw-bold' : 'text-success';
 
@@ -155,9 +151,6 @@ $(document).ready(function () {
         order: [[0, 'asc']]
     });
 
-    // ============================================================
-    // Helper: AJAX Excel download with SweetAlert loading
-    // ============================================================
     function downloadExcelWithLoading(url, fileName) {
         Swal.fire({
             title: 'Đang xuất tệp Excel...',
@@ -227,24 +220,22 @@ $(document).ready(function () {
         URL.revokeObjectURL(url);
     });
 
-    // ============================================================
-    // Modal Chi tiết nhóm lỗi
-    // ============================================================
-    let currentGroupType  = '';
-    let currentGroupData  = [];
+    // Modal Chi tiết nhóm lỗi (Top 50) & Xuất Excel nhóm
+    let currentGroupType = '';
+    let currentGroupData = [];
     let currentGroupTitle = '';
 
     const LABEL_MAP = {
         ThieuMoiToHop: 'NV thiếu điểm ở mọi tổ hợp',
-        KhongHocBa:    'NV không có học bạ',
-        KhongDiemCN:   'NV trống điểm CN',
-        BoQua:         'NV bị bỏ qua (hệ số = 0)'
+        KhongHocBa: 'NV không có học bạ',
+        KhongDiemCN: 'NV trống điểm CN',
+        BoQua: 'NV bị bỏ qua (hệ số = 0)'
     };
 
     function openGroupModal(type, title, data) {
-        currentGroupType  = type;
+        currentGroupType = type;
         currentGroupTitle = title;
-        currentGroupData  = data || [];
+        currentGroupData = data || [];
 
         $('#modalGroupTitle').text(title);
         const topCount = Math.min(50, currentGroupData.length);
@@ -261,10 +252,10 @@ $(document).ready(function () {
             const html = top50.map((item, index) => `
                 <tr>
                     <td class="text-center text-muted">${index + 1}</td>
-                    <td class="fw-semibold text-dark">${item.cccd || item.Cccd || ''}</td>
-                    <td class="text-center fw-bold text-primary">${item.thuTuNV || item.ThuTuNV || ''}</td>
-                    <td><span class="badge bg-light text-dark border">${item.maXetTuyen || item.MaXetTuyen || ''}</span></td>
-                    <td class="text-truncate" style="max-width: 250px;" title="${item.tenNganh || item.TenNganh || ''}">${item.tenNganh || item.TenNganh || ''}</td>
+                    <td class="fw-semibold text-dark">${item.Cccd || ''}</td>
+                    <td class="text-center fw-bold text-primary">${item.ThuTuNV || ''}</td>
+                    <td><span class="badge bg-light text-dark border">${item.MaXetTuyen || ''}</span></td>
+                    <td class="text-truncate" style="max-width: 250px;" title="${item.TenNganh || ''}">${item.TenNganh || ''}</td>
                 </tr>
             `).join('');
             $('#tbodyChiTietNhomLoi').html(html);
@@ -294,8 +285,8 @@ $(document).ready(function () {
 
     // ---- Bảng Thống kê theo ngành – delegated click handler ----
     $(document).on('click', '.nganh-group-link', function () {
-        const ma   = $(this).data('ma');
-        const ten  = $(this).data('ten');
+        const ma = $(this).data('ma');
+        const ten = $(this).data('ten');
         const loai = $(this).data('loai');
 
         const nganhData = (window.nganhGroupLists || {})[ma] || {};
@@ -317,10 +308,10 @@ $(document).ready(function () {
         const headers = ['STT', 'Số ĐDCN (CCCD)', 'Thứ Tự NV', 'Mã Ngành', 'Tên Ngành Đăng Ký'];
         const rows = currentGroupData.map((item, idx) => [
             idx + 1,
-            item.cccd       || item.Cccd       || '',
-            item.thuTuNV    || item.ThuTuNV    || '',
-            item.maXetTuyen || item.MaXetTuyen || '',
-            item.tenNganh   || item.TenNganh   || ''
+            item.Cccd || '',
+            item.ThuTuNV || '',
+            item.MaXetTuyen || '',
+            item.TenNganh || ''
         ]);
 
         const fileName = currentGroupTitle || 'DanhSach_ChiTiet';
