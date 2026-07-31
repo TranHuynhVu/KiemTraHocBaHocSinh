@@ -94,7 +94,12 @@ $(document).ready(function () {
         processing: true,
         deferRender: true,
         columns: [
-            { data: 'Stt' },
+            {
+                data: null,
+                render: function (data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
             { data: 'SoDDCN', render: function (data) { return `<span class="cccd-link">${data || ''}</span>`; } },
             { data: 'HoVaTen', render: function (data) { return `<strong class="text-dark">${data || ''}</strong>`; } },
             { data: 'ThuTuNV', render: function (data) { return `<span class="badge bg-secondary badge-combo-major">${data}</span>`; } },
@@ -170,8 +175,8 @@ $(document).ready(function () {
         }
 
         const headers = ['STT', 'Số ĐDCN', 'Họ và Tên', 'TT NV', 'Mã Ngành', 'Tên Ngành', 'Mã Tổ Hợp', 'Năm Học', 'Môn Thiếu'];
-        const rows = lastResultData.map(item => [
-            item.Stt,
+        const rows = lastResultData.map((item, idx) => [
+            idx + 1,
             `"${item.SoDDCN || ''}"`,
             `"${item.HoVaTen || ''}"`,
             item.ThuTuNV,
@@ -232,19 +237,19 @@ $(document).ready(function () {
 
     // Click handlers for the 4 error/skipped statistics in Table 1
     $('#statNVThieuMoiToHop').click(function () {
-        openGroupModal('ThieuMoiToHop', 'DanhSachNguyenVongThieuDiemOMoiToHop');
+        openGroupModal('ThieuMoiToHop', 'Danh sách nguyện vọng thiếu môn trong tổ hợp');
     });
 
     $('#statNVKhongHocBa').click(function () {
-        openGroupModal('KhongHocBa', 'DanhSachNguyenVongKhongCoHocBa');
+        openGroupModal('KhongHocBa', 'Danh sách nguyện vọng không có học bạ');
     });
 
     $('#statNVKhongDiemCN').click(function () {
-        openGroupModal('KhongDiemCN', 'DanhSachNguyenVongTrongDiemCN');
+        openGroupModal('KhongDiemCN', 'Danh sách nguyện vọng không có điểm chuẩn');
     });
 
     $('#statNguyenVongBoQua').click(function () {
-        openGroupModal('BoQua', 'DanhSachNguyenVongBoQua');
+        openGroupModal('BoQua', 'Danh sách nguyện vọng bị bỏ qua');
     });
 
     // Export CSV button inside Modal
@@ -268,7 +273,7 @@ $(document).ready(function () {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const fileName = (currentGroupTitle || 'DanhSach_ChiTiet').replace(/[^a-zA-Z0-9_ -]/g, '') + '.csv';
+        const fileName = (currentGroupTitle || 'DanhSach_ChiTiet') + '.csv';
         a.download = fileName;
         a.click();
         URL.revokeObjectURL(url);

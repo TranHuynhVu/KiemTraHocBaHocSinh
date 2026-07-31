@@ -530,12 +530,6 @@ namespace TuyenSinh.Services
                 .ThenBy(x => x.ThuTuNV)
                 .ToList();
 
-            int stt = 1;
-            foreach (var item in ketQuaThieuDiem)
-            {
-                item.Stt = stt++;
-            }
-
             var thongKeTongHop = new ThongKeTongHopViewModel
             {
                 TongDongNguyenVong = listNVThongKe.Count,
