@@ -8,20 +8,19 @@ $(document).ready(function () {
             dataSrc: function (json) {
                 if (!json.success) {
                     Swal.fire('Lỗi', json.message || 'Không thể tải dữ liệu đối chiếu.', 'error');
-                    // Hide loaders and show empty content
                     $('#summaryLoading, #tableNganhLoading').addClass('d-none');
                     $('#summaryContent, #tableNganhContent').removeClass('d-none');
                     return [];
                 }
 
-                // Save data for client-side CSV export
+                // Save data for client-side export
                 lastResultData = json.data || [];
                 $('#badgeTongDongChiTietLoi').text((lastResultData.length || 0).toLocaleString() + ' dòng');
 
                 // 1. Render Table 1: Thống kê tổng hợp
                 $('#summaryLoading').addClass('d-none');
                 $('#summaryContent').removeClass('d-none');
-                
+
                 const th = json.thongKeTongHop || json.ThongKeTongHop || {};
                 $('#statTongDongNV').text((th.tongDongNguyenVong || th.TongDongNguyenVong || 0).toLocaleString());
                 $('#statTongThiSinh').text((th.tongThiSinhDuyNhat || th.TongThiSinhDuyNhat || 0).toLocaleString());
@@ -31,12 +30,12 @@ $(document).ready(function () {
                 $('#statNVKhongDiemCN').text((th.nguyenVongKhongDiemCN || th.NguyenVongKhongDiemCN || 0).toLocaleString());
                 $('#statNguyenVongBoQua').text((th.nguyenVongBoQua || th.NguyenVongBoQua || 0).toLocaleString());
 
-                // Store category lists globally for Modal & CSV export
+                // Store category lists globally for Modal & export
                 window.groupLists = {
                     ThieuMoiToHop: th.danhSachThieuMoiToHop || th.DanhSachThieuMoiToHop || [],
-                    KhongHocBa: th.danhSachKhongHocBa || th.DanhSachKhongHocBa || [],
-                    KhongDiemCN: th.danhSachKhongDiemCN || th.DanhSachKhongDiemCN || [],
-                    BoQua: th.danhSachBoQua || th.DanhSachBoQua || []
+                    KhongHocBa:    th.danhSachKhongHocBa    || th.DanhSachKhongHocBa    || [],
+                    KhongDiemCN:   th.danhSachKhongDiemCN   || th.DanhSachKhongDiemCN   || [],
+                    BoQua:         th.danhSachBoQua          || th.DanhSachBoQua          || []
                 };
 
                 // 2. Render Table 2: Thống kê theo ngành
@@ -44,19 +43,50 @@ $(document).ready(function () {
                 $('#tableNganhContent').removeClass('d-none');
 
                 const dsNganh = json.thongKeTheoNganh || json.ThongKeTheoNganh || [];
+
+                // Store per-ngành detail lists for modal (keyed by maXetTuyen)
+                window.nganhGroupLists = {};
+                dsNganh.forEach(function (item) {
+                    const ma = item.maXetTuyen || item.MaXetTuyen || '';
+                    window.nganhGroupLists[ma] = {
+                        ThieuMoiToHop: item.danhSachThieuMoiToHop || item.DanhSachThieuMoiToHop || [],
+                        KhongHocBa:    item.danhSachKhongHocBa    || item.DanhSachKhongHocBa    || [],
+                        KhongDiemCN:   item.danhSachKhongDiemCN   || item.DanhSachKhongDiemCN   || []
+                    };
+                });
+
                 if (dsNganh.length > 0) {
-                    const rowsHtml = dsNganh.map(item => {
+                    const rowsHtml = dsNganh.map(function (item) {
                         const ma = item.maXetTuyen || item.MaXetTuyen || '';
                         const ten = item.tenNganh || item.TenNganh || '';
                         const tongNV = (item.tongNV || item.TongNV || 0).toLocaleString();
                         const soThiSinh = (item.soThiSinh || item.SoThiSinh || 0).toLocaleString();
                         const nvCoToHopDu = (item.nvCoToHopDu || item.NVCoToHopDu || 0).toLocaleString();
-                        const nvThieuMoiToHop = (item.nvThieuMoiToHop || item.NVThieuMoiToHop || 0).toLocaleString();
-                        const nvKhongDiemCN = (item.nvKhongDiemCN || item.NVKhongDiemCN || 0).toLocaleString();
-                        const nvKhongHocBa = (item.nvKhongHocBa || item.NVKhongHocBa || 0).toLocaleString();
+
+                        const rawThieu  = item.nvThieuMoiToHop || item.NVThieuMoiToHop || 0;
+                        const rawDiemCN = item.nvKhongDiemCN   || item.NVKhongDiemCN   || 0;
+                        const rawHocBa  = item.nvKhongHocBa    || item.NVKhongHocBa    || 0;
+
                         const valTyLe = (item.tyLeThieu !== undefined ? item.tyLeThieu : item.TyLeThieu) || 0;
                         const tyLeThieu = valTyLe.toFixed(2) + '%';
                         const badgeClass = valTyLe > 0 ? 'text-danger fw-bold' : 'text-success';
+
+                        // Render clickable links for 3 error columns (only if count > 0)
+                        const tenEsc = ten.replace(/"/g, '&quot;');
+                        const cellThieu = rawThieu > 0
+                            ? `<a href="javascript:void(0)" class="nganh-group-link text-danger text-decoration-underline fw-semibold"
+                                data-ma="${ma}" data-ten="${tenEsc}" data-loai="ThieuMoiToHop">${rawThieu.toLocaleString()}</a>`
+                            : `<span class="text-muted">0</span>`;
+
+                        const cellDiemCN = rawDiemCN > 0
+                            ? `<a href="javascript:void(0)" class="nganh-group-link text-warning text-decoration-underline fw-semibold"
+                                data-ma="${ma}" data-ten="${tenEsc}" data-loai="KhongDiemCN">${rawDiemCN.toLocaleString()}</a>`
+                            : `<span class="text-muted">0</span>`;
+
+                        const cellHocBa = rawHocBa > 0
+                            ? `<a href="javascript:void(0)" class="nganh-group-link text-secondary text-decoration-underline fw-semibold"
+                                data-ma="${ma}" data-ten="${tenEsc}" data-loai="KhongHocBa">${rawHocBa.toLocaleString()}</a>`
+                            : `<span class="text-muted">0</span>`;
 
                         return `<tr>
                             <td><code>${ma}</code></td>
@@ -64,9 +94,9 @@ $(document).ready(function () {
                             <td class="text-end fw-semibold">${tongNV}</td>
                             <td class="text-end">${soThiSinh}</td>
                             <td class="text-end text-success">${nvCoToHopDu}</td>
-                            <td class="text-end text-danger">${nvThieuMoiToHop}</td>
-                            <td class="text-end text-warning">${nvKhongDiemCN}</td>
-                            <td class="text-end text-secondary">${nvKhongHocBa}</td>
+                            <td class="text-end">${cellThieu}</td>
+                            <td class="text-end">${cellDiemCN}</td>
+                            <td class="text-end">${cellHocBa}</td>
                             <td class="text-end ${badgeClass}">${tyLeThieu}</td>
                         </tr>`;
                     }).join('');
@@ -125,7 +155,9 @@ $(document).ready(function () {
         order: [[0, 'asc']]
     });
 
-    // Helper function for AJAX Excel download with SweetAlert loading modal using jQuery AJAX
+    // ============================================================
+    // Helper: AJAX Excel download with SweetAlert loading
+    // ============================================================
     function downloadExcelWithLoading(url, fileName) {
         Swal.fire({
             title: 'Đang xuất tệp Excel...',
@@ -140,9 +172,7 @@ $(document).ready(function () {
         $.ajax({
             url: url,
             method: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            },
+            xhrFields: { responseType: 'blob' },
             success: function (blob) {
                 Swal.close();
                 const downloadUrl = URL.createObjectURL(blob);
@@ -161,13 +191,13 @@ $(document).ready(function () {
         });
     }
 
-    // Export Excel button click handler
+    // Export main table Excel
     $('#btnExportExcel').click(function () {
         const url = `/admin/hoc-ba/xuat-excel-ket-qua-doi-chieu?hocBaFileId=${hocBaFileId}&nguyenVongFileId=${nguyenVongFileId}`;
         downloadExcelWithLoading(url, 'DoiChieu_HocBa_NguyenVong.xlsx');
     });
 
-    // Client-side CSV export scraping loaded rows from DataTable
+    // Export main table CSV
     $('#btnExportCsv').click(function () {
         if (!lastResultData || lastResultData.length === 0) {
             Swal.fire('Chưa có dữ liệu', 'Không có dữ liệu để xuất.', 'warning');
@@ -197,15 +227,24 @@ $(document).ready(function () {
         URL.revokeObjectURL(url);
     });
 
-    // Modal Chi tiết nhóm lỗi (Top 50) & Xuất CSV nhóm
-    let currentGroupType = '';
-    let currentGroupData = [];
+    // ============================================================
+    // Modal Chi tiết nhóm lỗi
+    // ============================================================
+    let currentGroupType  = '';
+    let currentGroupData  = [];
     let currentGroupTitle = '';
 
-    function openGroupModal(type, title) {
-        currentGroupType = type;
+    const LABEL_MAP = {
+        ThieuMoiToHop: 'NV thiếu điểm ở mọi tổ hợp',
+        KhongHocBa:    'NV không có học bạ',
+        KhongDiemCN:   'NV trống điểm CN',
+        BoQua:         'NV bị bỏ qua (hệ số = 0)'
+    };
+
+    function openGroupModal(type, title, data) {
+        currentGroupType  = type;
         currentGroupTitle = title;
-        currentGroupData = (window.groupLists && window.groupLists[type]) || [];
+        currentGroupData  = data || [];
 
         $('#modalGroupTitle').text(title);
         const topCount = Math.min(50, currentGroupData.length);
@@ -235,24 +274,40 @@ $(document).ready(function () {
         modal.show();
     }
 
-    // Click handlers for the 4 error/skipped statistics in Table 1
+    // ---- Bảng Thống kê tổng hợp – click handlers ----
     $('#statNVThieuMoiToHop').click(function () {
-        openGroupModal('ThieuMoiToHop', 'Danh sách nguyện vọng thiếu môn trong tổ hợp');
+        openGroupModal('ThieuMoiToHop', 'Danh sách nguyện vọng thiếu môn trong tổ hợp',
+            (window.groupLists || {}).ThieuMoiToHop || []);
     });
-
     $('#statNVKhongHocBa').click(function () {
-        openGroupModal('KhongHocBa', 'Danh sách nguyện vọng không có học bạ');
+        openGroupModal('KhongHocBa', 'Danh sách nguyện vọng không có học bạ',
+            (window.groupLists || {}).KhongHocBa || []);
     });
-
     $('#statNVKhongDiemCN').click(function () {
-        openGroupModal('KhongDiemCN', 'Danh sách nguyện vọng không có điểm chuẩn');
+        openGroupModal('KhongDiemCN', 'Danh sách nguyện vọng có điểm CN NULL',
+            (window.groupLists || {}).KhongDiemCN || []);
     });
-
     $('#statNguyenVongBoQua').click(function () {
-        openGroupModal('BoQua', 'Danh sách nguyện vọng bị bỏ qua');
+        openGroupModal('BoQua', 'Danh sách nguyện vọng bị bỏ qua',
+            (window.groupLists || {}).BoQua || []);
     });
 
-    // Export CSV button inside Modal
+    // ---- Bảng Thống kê theo ngành – delegated click handler ----
+    $(document).on('click', '.nganh-group-link', function () {
+        const ma   = $(this).data('ma');
+        const ten  = $(this).data('ten');
+        const loai = $(this).data('loai');
+
+        const nganhData = (window.nganhGroupLists || {})[ma] || {};
+        const list = nganhData[loai] || [];
+
+        const loaiLabel = LABEL_MAP[loai] || loai;
+        const title = `[${ma}] ${ten} – ${loaiLabel}`;
+
+        openGroupModal(loai, title, list);
+    });
+
+    // ---- Export Excel trong Modal ----
     $('#btnExportGroupCsv').click(function () {
         if (!currentGroupData || currentGroupData.length === 0) {
             Swal.fire('Chưa có dữ liệu', 'Không có dữ liệu để xuất.', 'warning');
@@ -262,20 +317,31 @@ $(document).ready(function () {
         const headers = ['STT', 'Số ĐDCN (CCCD)', 'Thứ Tự NV', 'Mã Ngành', 'Tên Ngành Đăng Ký'];
         const rows = currentGroupData.map((item, idx) => [
             idx + 1,
-            `"${item.cccd || item.Cccd || ''}"`,
-            item.thuTuNV || item.ThuTuNV || '',
-            `"${item.maXetTuyen || item.MaXetTuyen || ''}"`,
-            `"${(item.tenNganh || item.TenNganh || '').replace(/"/g, '""')}"`
+            item.cccd       || item.Cccd       || '',
+            item.thuTuNV    || item.ThuTuNV    || '',
+            item.maXetTuyen || item.MaXetTuyen || '',
+            item.tenNganh   || item.TenNganh   || ''
         ]);
 
-        const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = (currentGroupTitle || 'DanhSach_ChiTiet') + '.csv';
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
+        const fileName = currentGroupTitle || 'DanhSach_ChiTiet';
+
+        if (typeof XLSX !== 'undefined') {
+            const sheetData = [headers, ...rows];
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'DanhSach');
+            XLSX.writeFile(wb, fileName + '.xlsx');
+        } else {
+            // Fallback CSV with UTF-8 BOM
+            const csvRows = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','));
+            const csvContent = '\uFEFF' + [headers.join(','), ...csvRows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     });
 });

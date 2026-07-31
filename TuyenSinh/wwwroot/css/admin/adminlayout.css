@@ -626,3 +626,174 @@ table.dataTable tbody td {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
 }
+
+/* === HocBa Views – Column Widths === */
+/* Used in table <th> to replace inline width styles */
+.col-w-50  { width: 50px; }
+.col-w-60  { width: 60px; }
+.col-w-70  { width: 70px; }
+.col-w-75  { width: 75px; }
+.col-w-80  { width: 80px; }
+.col-w-90  { width: 90px; }
+.col-w-100 { width: 100px; }
+.col-w-110 { width: 110px; }
+.col-w-120 { width: 120px; }
+.col-w-130 { width: 130px; }
+.col-w-140 { width: 140px; }
+
+/* === HocBa Views – Table Font Sizes === */
+.table-xs   { font-size: 0.80rem; }
+.table-sm2  { font-size: 0.83rem; }
+.table-sm3  { font-size: 0.88rem; }
+
+/* === KetQuaDoiChieu – Summary Card Table scrollable container === */
+.table-nganh-scroll {
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+/* === KetQuaDoiChieu – Modal table scrollable container === */
+.modal-table-scroll {
+    max-height: 400px;
+}
+
+/* === Preview.cshtml – Result card headers === */
+.card-header-label {
+    font-size: 0.9rem;
+    color: #1c1c1e;
+}
+
+/* Badge dùng trong card header kết quả kiểm tra */
+.badge-result {
+    font-size: 0.7rem;
+    border-radius: 3px;
+}
+
+/* Nút xuất Excel nhỏ trong card header */
+.btn-header-action {
+    font-size: 0.75rem;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: 600;
+}
+
+/* === Index.cshtml / DoiChieu.cshtml – Upload form heading === */
+.upload-heading {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Drop zone title inside upload card */
+.drop-zone-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-main) !important;
+}
+
+/* Page main heading reuse across HocBa pages */
+.page-main-heading {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* Back button used across pages */
+.btn-back {
+    border-radius: 6px;
+}
+
+/* === Index.cshtml – Upload page layout === */
+.upload-container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.custom-card {
+    border-radius: 12px;
+    border: 1px solid #e5e5ea;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+.custom-card .card-header {
+    background-color: #fafafa !important;
+    border-bottom: 1px solid #e5e5ea !important;
+    padding: 18px 24px !important;
+}
+
+.custom-card .card-header h5 {
+    color: var(--text-main);
+}
+
+.custom-card .card-body {
+    padding: 32px !important;
+}
+
+.drop-zone-wrapper {
+    border: 2px dashed #d1d1d6;
+    border-radius: 10px;
+    background-color: #fafafa;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.drop-zone-wrapper:hover,
+.drop-zone-wrapper.dragover {
+    border-color: var(--primary-color);
+    background-color: #f5fafd;
+}
+
+.upload-icon {
+    width: 56px;
+    height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.drop-zone-wrapper:hover .upload-icon {
+    transform: scale(1.08);
+}
+
+.select-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background-color: #ffffff;
+    color: var(--primary-color);
+    border: 1px solid #d1d1d6;
+    margin-top: 12px;
+    transition: all 0.2s;
+}
+
+.drop-zone-wrapper:hover .select-file-btn {
+    border-color: var(--primary-color);
+    background-color: #f5fafd;
+}
+
+.file-info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    border: 1px solid rgba(0, 122, 255, 0.15);
+}

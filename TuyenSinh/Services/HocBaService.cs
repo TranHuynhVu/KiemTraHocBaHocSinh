@@ -222,9 +222,22 @@ namespace TuyenSinh.Services
                 }
             }
 
+            var gopBaoCaoThieuDiem = baoCaoThieuDiem
+                .GroupBy(x => new { x.Cccd, x.HoVaTen, x.ToHop, x.MonThieu })
+                .Select((g, idx) => new BaoCaoThieuDiemItem
+                {
+                    Stt = idx + 1,
+                    Cccd = g.Key.Cccd,
+                    HoVaTen = g.Key.HoVaTen,
+                    ToHop = g.Key.ToHop,
+                    NamLoi = string.Join(", ", g.Select(x => x.NamLoi)),
+                    MonThieu = g.Key.MonThieu
+                })
+                .ToList();
+
             result.ThanhCong = true;
             result.DanhSachThieuNamHoc = baoCaoThieuNamHoc;
-            result.DanhSachThieuDiem = baoCaoThieuDiem;
+            result.DanhSachThieuDiem = gopBaoCaoThieuDiem;
 
             return result;
         }
@@ -575,7 +588,14 @@ namespace TuyenSinh.Services
                         NVKhongDiemCN = nvKhongDiemCN,
                         NVKhongHocBa = nvKhongHocBa,
                         NVBoQua = nvBoQua,
-                        TyLeThieu = tyLeThieu
+                        TyLeThieu = tyLeThieu,
+
+                        DanhSachThieuMoiToHop = g.Where(x => x.Loai == "ThieuMoiToHop")
+                            .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+                        DanhSachKhongHocBa = g.Where(x => x.Loai == "KhongHocBa")
+                            .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+                        DanhSachKhongDiemCN = g.Where(x => x.Loai == "KhongDiemCN")
+                            .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList()
                     };
                 })
                 .OrderByDescending(x => x.TongNV)
