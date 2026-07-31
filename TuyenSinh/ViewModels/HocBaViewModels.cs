@@ -70,6 +70,44 @@ namespace TuyenSinh.ViewModels
         public string? MonThieu { get; set; }
     }
 
+    public class ChiTietNguyenVongLoiItem
+    {
+        public string Cccd { get; set; } = string.Empty;
+        public int ThuTuNV { get; set; }
+        public string MaXetTuyen { get; set; } = string.Empty;
+        public string TenNganh { get; set; } = string.Empty;
+    }
+
+    public class ThongKeTongHopViewModel
+    {
+        public int TongDongNguyenVong { get; set; }
+        public int TongThiSinhDuyNhat { get; set; }
+        public int NguyenVongCoToHopDu { get; set; }
+        public int NguyenVongThieuMoiToHop { get; set; }
+        public int NguyenVongKhongHocBa { get; set; }
+        public int NguyenVongKhongDiemCN { get; set; }
+        public int NguyenVongBoQua { get; set; }
+
+        public List<ChiTietNguyenVongLoiItem> DanhSachThieuMoiToHop { get; set; } = new();
+        public List<ChiTietNguyenVongLoiItem> DanhSachKhongHocBa { get; set; } = new();
+        public List<ChiTietNguyenVongLoiItem> DanhSachKhongDiemCN { get; set; } = new();
+        public List<ChiTietNguyenVongLoiItem> DanhSachBoQua { get; set; } = new();
+    }
+
+    public class ThongKeTheoNganhItemViewModel
+    {
+        public string MaXetTuyen { get; set; } = string.Empty;
+        public string TenNganh { get; set; } = string.Empty;
+        public int TongNV { get; set; }
+        public int SoThiSinh { get; set; }
+        public int NVCoToHopDu { get; set; }
+        public int NVThieuMoiToHop { get; set; }
+        public int NVKhongDiemCN { get; set; }
+        public int NVKhongHocBa { get; set; }
+        public int NVBoQua { get; set; }
+        public double TyLeThieu { get; set; }
+    }
+
     public class KetQuaDoiChieu
     {
         public bool ThanhCong { get; set; }
@@ -78,6 +116,9 @@ namespace TuyenSinh.ViewModels
         public int TongLoiKhongTimThayNganh { get; set; }
         public List<string> DanhSachMaNganhKhongTim { get; set; } = new();
         public List<KetQuaDoiChieuItem> DanhSachThieuDiem { get; set; } = new();
+
+        public ThongKeTongHopViewModel ThongKeTongHop { get; set; } = new();
+        public List<ThongKeTheoNganhItemViewModel> ThongKeTheoNganh { get; set; } = new();
     }
 
     public class BaoCaoKiemTraDiemSanItem

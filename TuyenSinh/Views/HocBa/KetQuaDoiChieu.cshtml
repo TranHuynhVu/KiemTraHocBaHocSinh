@@ -15,7 +15,7 @@
     </a>
 </div>
 
-<!-- Alert mã ngành không tìm thấy (Được hiện động qua JS) -->
+<!-- Alert mã ngành không tìm thấy -->
 <div id="alertNganhNotFound" class="alert alert-import-info d-flex align-items-start gap-2 mb-4 d-none">
     <i class="fa-solid fa-triangle-exclamation fs-5 mt-1 text-warning"></i>
     <div>
@@ -24,30 +24,99 @@
     </div>
 </div>
 
-<!-- Stats -->
+<!-- Bảng Tổng Quan -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 8px;">
-            <div class="doichieu-stat-value text-primary" id="statTongNV">
-                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+    <!-- Table 1: Thống kê tổng hợp -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 8px;">
+            <div class="card-header bg-white py-3 px-3 border-bottom-light">
+                <h6 class="mb-0 doichieu-card-title text-primary fw-bold">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Thống kê tổng hợp
+                </h6>
             </div>
-            <div class="doichieu-stat-label">Tổng số nguyện vọng đối chiếu</div>
+            <div class="card-body p-0">
+                <div id="summaryLoading" class="text-center py-4">
+                    <i class="fa-solid fa-spinner fa-spin fs-4 text-primary"></i>
+                    <p class="mt-2 text-muted mb-0 small">Đang phân tích dữ liệu...</p>
+                </div>
+                <div id="summaryContent" class="d-none">
+                    <table class="table table-bordered table-sm mb-0 text-dark" style="font-size: 0.83rem;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Chỉ tiêu</th>
+                                <th class="text-end" style="width: 100px;">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tổng số dòng nguyện vọng</td>
+                                <td class="text-end fw-bold" id="statTongDongNV">0</td>
+                            </tr>
+                            <tr>
+                                <td>Tổng số thí sinh duy nhất</td>
+                                <td class="text-end fw-bold" id="statTongThiSinh">0</td>
+                            </tr>
+                            <tr>
+                                <td>Nguyện vọng có ít nhất 1 tổ hợp đủ điểm</td>
+                                <td class="text-end fw-bold text-success" id="statNVCoToHopDu">0</td>
+                            </tr>
+                            <tr>
+                                <td>Nguyện vọng thiếu điểm ở mọi tổ hợp</td>
+                                <td class="text-end fw-bold"><a href="javascript:void(0)" class="text-danger text-decoration-underline" id="statNVThieuMoiToHop" title="Click xem chi tiết top 50 & xuất CSV">0</a></td>
+                            </tr>
+                            <tr>
+                                <td>Nguyện vọng không có học bạ</td>
+                                <td class="text-end fw-bold"><a href="javascript:void(0)" class="text-danger text-decoration-underline" id="statNVKhongHocBa" title="Click xem chi tiết top 50 & xuất CSV">0</a></td>
+                            </tr>
+                            <tr>
+                                <td>Nguyện vọng trống điểm CN</td>
+                                <td class="text-end fw-bold"><a href="javascript:void(0)" class="text-warning text-decoration-underline" id="statNVKhongDiemCN" title="Click xem chi tiết top 50 & xuất CSV">0</a></td>
+                            </tr>
+                            <tr>
+                                <td>Nguyện vọng bỏ qua (hệ số học bạ = 0)</td>
+                                <td class="text-end fw-bold"><a href="javascript:void(0)" class="text-secondary text-decoration-underline" id="statNguyenVongBoQua" title="Click xem chi tiết top 50 & xuất CSV">0</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 8px;">
-            <div class="doichieu-stat-value text-danger" id="statTongLoi">
-                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+
+    <!-- Table 2: Thống kê theo ngành -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 8px;">
+            <div class="card-header bg-white py-3 px-3 border-bottom-light">
+                <h6 class="mb-0 doichieu-card-title text-primary fw-bold">
+                    <i class="fa-solid fa-list-check me-2"></i>Thống kê theo ngành
+                </h6>
             </div>
-            <div class="doichieu-stat-label">Số nguyện vọng thiếu điểm (lỗi)</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm text-center py-3 rounded-5">
-            <div class="doichieu-stat-value text-warning" id="statNganhKhongTim">
-                <i class="fa-solid fa-spinner fa-spin fs-5"></i>
+            <div class="card-body p-0">
+                <div id="tableNganhLoading" class="text-center py-4">
+                    <i class="fa-solid fa-spinner fa-spin fs-4 text-primary"></i>
+                    <p class="mt-2 text-muted mb-0 small">Đang phân tích dữ liệu ngành...</p>
+                </div>
+                <div id="tableNganhContent" class="table-responsive d-none" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-bordered table-hover table-sm mb-0 align-middle text-dark" style="font-size: 0.8rem;">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th style="width: 75px;">Mã XT</th>
+                                <th>Tên ngành</th>
+                                <th class="text-end" style="width: 70px;">Tổng NV</th>
+                                <th class="text-end" style="width: 70px;">Thí sinh</th>
+                                <th class="text-end text-success" style="width: 80px;">NV đủ</th>
+                                <th class="text-end text-danger" style="width: 90px;">NV thiếu mọi TH</th>
+                                <th class="text-end text-warning" style="width: 90px;">NV thiếu điểm CN</th>
+                                <th class="text-end text-secondary" style="width: 90px;">NV không học bạ</th>
+                                <th class="text-end fw-bold" style="width: 80px;">Tỷ lệ thiếu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyThongKeTheoNganh">
+                            <!-- Rendered dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="doichieu-stat-label">Mã xét tuyển không tìm thấy</div>
         </div>
     </div>
 </div>
@@ -55,8 +124,10 @@
 <!-- Kết quả Table -->
 <div class="card border-0 shadow-sm" style="border-radius: 8px;">
     <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between border-bottom-light">
-        <h5 class="mb-0 doichieu-card-title">
-            <i class="fa-solid fa-table-list text-danger me-2"></i>Danh sách thí sinh thiếu điểm theo nguyện vọng
+        <h5 class="mb-0 doichieu-card-title d-flex align-items-center">
+            <i class="fa-solid fa-table-list text-danger me-2"></i>
+            <span>Danh sách thí sinh thiếu điểm theo tổ hợp của nguyện vọng</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2 fs-6 rounded-pill" id="badgeTongDongChiTietLoi">0 dòng</span>
         </h5>
         <div class="d-flex gap-2">
             <button id="btnExportExcel" class="btn btn-success btn-sm px-3 rounded-5">
@@ -86,6 +157,48 @@
                     <!-- Loaded dynamically via AJAX DataTable -->
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết Nhóm lỗi / Bỏ qua (Top 50 & Xuất CSV) -->
+<div class="modal fade" id="modalChiTietNhomLoi" tabindex="-1" aria-labelledby="modalChiTietNhomLoiLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-light py-3">
+                <h5 class="modal-title fw-bold text-primary" id="modalChiTietNhomLoiLabel">
+                    <i class="fa-solid fa-list-ul me-2"></i><span id="modalGroupTitle">Chi tiết nhóm nguyện vọng</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 bg-light-subtle border-bottom d-flex justify-content-between align-items-center">
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill fs-6" id="badgeModalGroupCount">Top 50 dòng đầu tiên</span>
+                    <small class="text-muted"><i class="fa-solid fa-circle-info me-1"></i>Bảng bên dưới hiển thị tối đa 50 dòng. Sử dụng nút <b>Xuất CSV</b> để tải toàn bộ.</small>
+                </div>
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-sm table-hover table-striped mb-0" style="font-size: 0.88rem;">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th style="width: 140px;">Số ĐDCN (CCCD)</th>
+                                <th class="text-center" style="width: 80px;">TT NV</th>
+                                <th style="width: 100px;">Mã ngành</th>
+                                <th>Tên ngành đăng ký</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyChiTietNhomLoi">
+                            <!-- Rendered dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-2 bg-light d-flex justify-content-between">
+                <button id="btnExportGroupCsv" type="button" class="btn btn-success btn-sm px-3 rounded-5">
+                    <i class="fa-solid fa-file-csv me-1"></i>Xuất CSV (Toàn bộ)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm px-4 rounded-5" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
     </div>
 </div>

@@ -11,7 +11,7 @@ namespace TuyenSinh.Enums
         DI,   // Địa lý
         GD,   // GDCD
         TI,   // Tin học
-        CN,   // Công nghệ
+        CNCN,   // Công nghệ công nghiệp
         NN,   // Ngoại ngữ
         N1,   // Tiếng anh
         N2,   // Tiếng Nga

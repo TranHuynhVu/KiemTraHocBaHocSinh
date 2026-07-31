@@ -83,57 +83,12 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel-thieu-diem")]
         public async Task<IActionResult> XuatExcelThieuDiemToHop(string excelId)
         {
-            if (string.IsNullOrEmpty(excelId))
+            var result = await _hocBaService.XuatExcelThieuDiemToHopAsync(excelId);
+            if (!result.Success)
             {
-                return BadRequest("Excel không hợp lệ.");
+                return BadRequest(result.Message);
             }
-
-            var result = await _hocBaService.CheckHocBaAsync(excelId);
-            if (!result.ThanhCong)
-            {
-                return BadRequest(result.ThongBao);
-            }
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using (var package = new ExcelPackage())
-            {
-                var worksheet = package.Workbook.Worksheets.Add("Thí sinh thiếu điểm");
-
-                // Headers
-                worksheet.Cells[1, 1].Value = "STT";
-                worksheet.Cells[1, 2].Value = "Số ĐDCN (CCCD)";
-                worksheet.Cells[1, 3].Value = "Họ và tên";
-                worksheet.Cells[1, 4].Value = "Năm lỗi";
-                worksheet.Cells[1, 5].Value = "Tổ hợp";
-                worksheet.Cells[1, 6].Value = "Môn bị thiếu điểm";
-
-                // Styling headers
-                using (var range = worksheet.Cells[1, 1, 1, 6])
-                {
-                    range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                    range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
-                }
-
-                // Data
-                int row = 2;
-                foreach (var item in result.DanhSachThieuDiem)
-                {
-                    worksheet.Cells[row, 1].Value = item.Stt;
-                    worksheet.Cells[row, 2].Value = item.Cccd;
-                    worksheet.Cells[row, 3].Value = item.HoVaTen;
-                    worksheet.Cells[row, 4].Value = item.NamLoi;
-                    worksheet.Cells[row, 5].Value = item.ToHop;
-                    worksheet.Cells[row, 6].Value = item.MonThieu;
-                    row++;
-                }
-
-                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-                var fileContents = package.GetAsByteArray();
-                return File(fileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ThiSinh_ThieuDiem_ToHop.xlsx");
-            }
+            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ThiSinh_ThieuDiem_ToHop.xlsx");
         }
 
         [HttpGet("doi-chieu")]
@@ -142,8 +97,8 @@ namespace TuyenSinh.Controllers
             return View("DoiChieu");
         }
 
-        [HttpPost("ket-qua-doi-chieu")]
-        public async Task<IActionResult> NopFileDoiChieu(IFormFile fileHocBa, IFormFile fileNguyenVong)
+        [HttpPost("thuc-hien-doi-chieu")]
+        public async Task<IActionResult> ThucHienDoiChieu(IFormFile fileHocBa, IFormFile fileNguyenVong)
         {
             if (fileHocBa == null || fileHocBa.Length == 0)
             {
@@ -187,53 +142,21 @@ namespace TuyenSinh.Controllers
                 tongNguyenVong = result.TongNguyenVong,
                 tongLoiKhongTimThayNganh = result.TongLoiKhongTimThayNganh,
                 danhSachMaNganhKhongTim = result.DanhSachMaNganhKhongTim,
-                data = result.DanhSachThieuDiem
+                data = result.DanhSachThieuDiem,
+                thongKeTongHop = result.ThongKeTongHop,
+                thongKeTheoNganh = result.ThongKeTheoNganh
             });
         }
 
         [HttpGet("xuat-excel-ket-qua-doi-chieu")]
         public async Task<IActionResult> XuatExcelKetQuaDoiChieu(string hocBaFileId, string nguyenVongFileId)
         {
-            if (string.IsNullOrEmpty(hocBaFileId) || string.IsNullOrEmpty(nguyenVongFileId))
-                return BadRequest("Yêu cầu không hợp lệ.");
-
-            var result = await _hocBaService.DoiChieuHocBaVaNguyenVongAsync(hocBaFileId, nguyenVongFileId);
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var ws = package.Workbook.Worksheets.Add("Đối chiếu HB - NV");
-
-            // Headers
-            string[] headers = { "STT", "Số ĐDCN (CCCD)", "Họ và Tên", "TT Nguyện Vọng", "Mã Ngành", "Tên Ngành", "Mã Tổ Hợp", "Năm Học", "Môn Thiếu" };
-            for (int c = 0; c < headers.Length; c++)
-                ws.Cells[1, c + 1].Value = headers[c];
-
-            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            var result = await _hocBaService.XuatExcelKetQuaDoiChieuAsync(hocBaFileId, nguyenVongFileId);
+            if (!result.Success)
             {
-                range.Style.Font.Bold = true;
-                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+                return BadRequest(result.Message);
             }
-
-            int row = 2;
-            foreach (var item in result.DanhSachThieuDiem)
-            {
-                ws.Cells[row, 1].Value = item.Stt;
-                ws.Cells[row, 2].Value = item.SoDDCN;
-                ws.Cells[row, 3].Value = item.HoVaTen;
-                ws.Cells[row, 4].Value = item.ThuTuNV;
-                ws.Cells[row, 5].Value = item.MaNganh;
-                ws.Cells[row, 6].Value = item.TenNganh;
-                ws.Cells[row, 7].Value = item.MaToHop;
-                ws.Cells[row, 8].Value = item.NamHoc;
-                ws.Cells[row, 9].Value = item.MonThieu;
-                row++;
-            }
-            ws.Cells[ws.Dimension.Address].AutoFitColumns();
-
-            var bytes = package.GetAsByteArray();
-            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DoiChieu_HocBa_NguyenVong.xlsx");
+            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DoiChieu_HocBa_NguyenVong.xlsx");
         }
 
         [HttpGet("kiem-tra-diem-san")]
@@ -244,8 +167,8 @@ namespace TuyenSinh.Controllers
             return View("KiemTraDiemSan");
         }
 
-        [HttpPost("ket-qua-kiem-tra-diem-san")]
-        public async Task<IActionResult> NopFileKiemTraDiemSan(string maNganh, IFormFile file)
+        [HttpPost("thuc-hien-kiem-tra-diem-san")]
+        public async Task<IActionResult> ThucHienKiemTraDiemSan(string maNganh, IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
@@ -296,46 +219,12 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel-kiem-tra-diem-san")]
         public async Task<IActionResult> XuatExcelKiemTraDiemSan(string maNganh, string fileId)
         {
-            if (string.IsNullOrEmpty(fileId))
-                return BadRequest("Yêu cầu không hợp lệ.");
-
-            var result = await _hocBaService.KiemTraDiemSan(maNganh, fileId);
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var ws = package.Workbook.Worksheets.Add("Kiểm tra điểm sàn");
-
-            string[] headers = { "STT", "Họ và Tên", "Số ĐDCN (CCCD)", "Mã Ngành", "Tổ Hợp", "Điểm Xét Tuyển", "Điểm Sàn Ngành", "Điểm Sàn Toán", "Ghi Chú Lỗi" };
-            for (int c = 0; c < headers.Length; c++)
-                ws.Cells[1, c + 1].Value = headers[c];
-
-            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            var result = await _hocBaService.XuatExcelKiemTraDiemSanAsync(maNganh, fileId);
+            if (!result.Success)
             {
-                range.Style.Font.Bold = true;
-                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+                return BadRequest(result.Message);
             }
-
-            int row = 2;
-            int stt = 1;
-            foreach (var item in result.DanhSachKiemTraDiemSan)
-            {
-                ws.Cells[row, 1].Value = stt++;
-                ws.Cells[row, 2].Value = item.HoTen;
-                ws.Cells[row, 3].Value = item.CCCD;
-                ws.Cells[row, 4].Value = item.MaNganh;
-                ws.Cells[row, 5].Value = item.ToHop;
-                ws.Cells[row, 6].Value = item.DiemXetTuyen;
-                ws.Cells[row, 7].Value = item.DiemSan;
-                ws.Cells[row, 8].Value = item.DiemSanToan;
-                ws.Cells[row, 9].Value = item.GhiChu;
-                row++;
-            }
-            ws.Cells[ws.Dimension.Address].AutoFitColumns();
-
-            var bytes = package.GetAsByteArray();
-            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KetQua_KiemTra_DiemSan.xlsx");
+            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KetQua_KiemTra_DiemSan.xlsx");
         }
     }
 }

@@ -24,31 +24,19 @@ namespace TuyenSinh.Services
 
         public async Task<(bool Success, string Message, string? ExcelId, List<HocBaPreviewItem>? PreviewData)> UploadAndPreviewAsync(IFormFile file)
         {
-            if (file == null || file.Length == 0)
+            string excelId;
+            try
             {
-                return (false, "Vui lòng chọn tập Excel để tải lên.", null, null);
+                excelId = await LuuFileTamThoiAsync(file);
             }
-
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            if (extension != ".xlsx")
+            catch (Exception ex)
             {
-                return (false, "Hỗ trợ định dạng .xlsx.", null, null);
+                return (false, ex.Message, null, null);
             }
 
             var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
+            var filePath = Path.Combine(webRootPath, "uploads", excelId);
 
-            var excelId = Guid.NewGuid().ToString() + extension;
-            var filePath = Path.Combine(uploadsFolder, excelId);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
 
             try
             {
@@ -302,7 +290,8 @@ namespace TuyenSinh.Services
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var pkgHB = new ExcelPackage(new FileInfo(fileHocBaPath));
+                using var msHB = new MemoryStream(System.IO.File.ReadAllBytes(fileHocBaPath));
+                using var pkgHB = new ExcelPackage(msHB);
                 var sheetHB = pkgHB.Workbook.Worksheets[0];
                 int totalRowsHB = sheetHB.Dimension.End.Row;
 
@@ -358,7 +347,8 @@ namespace TuyenSinh.Services
             try
             {
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var pkgNV = new ExcelPackage(new FileInfo(fileNguyenVongPath));
+                using var msNV = new MemoryStream(System.IO.File.ReadAllBytes(fileNguyenVongPath));
+                using var pkgNV = new ExcelPackage(msNV);
                 var sheetNV = pkgNV.Workbook.Worksheets[0];
                 int totalRowsNV = sheetNV.Dimension.End.Row;
                 
@@ -407,8 +397,8 @@ namespace TuyenSinh.Services
             // 4. Xử lý từng nguyện vọng Group theo CCCD
             var processingStart = DateTime.Now;
             var maNganhKhongTimThay = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var ketQuaThieuDiem = new List<KetQuaDoiChieuItem>();
-            int stt = 1;
+            var danhSachTam = new List<KetQuaDoiChieuItem>();
+            var thiSinhKhongHocBa = new HashSet<string>();
 
             // Group nguyện vọng theo CCCD
             var nvTheoCccd = danhSachNV
@@ -423,6 +413,7 @@ namespace TuyenSinh.Services
                 // Lấy học bạ của thí sinh bằng Dictionary
                 if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
                 {
+                    thiSinhKhongHocBa.Add(cccd);
                     continue;
                 }
 
@@ -437,10 +428,16 @@ namespace TuyenSinh.Services
                 {
                     var maNganh = nv.MaXetTuyen!.Trim();
 
-                    // Tìm ngành trong DB bằng Dictionary
+                    // Tìm ngành
                     if (!nganhDict.TryGetValue(maNganh, out var nganh))
                     {
                         maNganhKhongTimThay.Add(maNganh);
+                        continue;
+                    }
+
+                    // Nếu ngành có HeSoHB == 0 (chỉ xét điểm THPT), bỏ qua không tạo dòng chi tiết lỗi học bạ!
+                    if (nganh.HeSoHB == 0)
+                    {
                         continue;
                     }
 
@@ -472,9 +469,8 @@ namespace TuyenSinh.Services
 
                             if (cacMonThieu.Count > 0)
                             {
-                                ketQuaThieuDiem.Add(new KetQuaDoiChieuItem
+                                danhSachTam.Add(new KetQuaDoiChieuItem
                                 {
-                                    Stt = stt++,
                                     SoDDCN = cccd,
                                     HoVaTen = tenHoVaTen,
                                     ThuTuNV = nv.ThuTuNV,
@@ -490,9 +486,179 @@ namespace TuyenSinh.Services
                 }
             }
 
+            var ketQuaThieuDiem = danhSachTam
+                .GroupBy(x => new { x.SoDDCN, x.HoVaTen, x.ThuTuNV, x.MaNganh, x.TenNganh, x.MaToHop, x.MonThieu })
+                .Select(g => new KetQuaDoiChieuItem
+                {
+                    SoDDCN = g.Key.SoDDCN,
+                    HoVaTen = g.Key.HoVaTen,
+                    ThuTuNV = g.Key.ThuTuNV,
+                    MaNganh = g.Key.MaNganh,
+                    TenNganh = g.Key.TenNganh,
+                    MaToHop = g.Key.MaToHop,
+                    NamHoc = string.Join(", ", g.Select(x => x.NamHoc)),
+                    MonThieu = g.Key.MonThieu
+                })
+                .OrderBy(x => x.SoDDCN)
+                .ThenBy(x => x.ThuTuNV)
+                .ToList();
+
+            int stt = 1;
+            foreach (var item in ketQuaThieuDiem)
+            {
+                item.Stt = stt++;
+            }
+
+            // Dữ liệu phục vụ 2 bảng thống kê
+            var listNVThongKe = new List<(string Cccd, int ThuTuNV, string MaNganh, string TenNganh, string Loai)>();
+
+            foreach (var nv in danhSachNV)
+            {
+                var cccd = nv.SoDDCN!;
+                var thuTuNV = nv.ThuTuNV;
+                var maNganh = nv.MaXetTuyen!.Trim();
+                var tenNganh = nv.TenNganh ?? string.Empty;
+
+                if (nganhDict.TryGetValue(maNganh, out var nganhEntity))
+                {
+                    if (!string.IsNullOrEmpty(nganhEntity.TenNganh))
+                        tenNganh = nganhEntity.TenNganh;
+
+                    // Nếu ngành có HeSoHB == 0 (chỉ xét điểm THPT) -> bỏ qua đối chiếu học bạ
+                    if (nganhEntity.HeSoHB == 0)
+                    {
+                        listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "BoQua"));
+                        continue;
+                    }
+                }
+
+                // Nếu thí sinh không có file học bạ
+                if (!hocBaTheoCccd.TryGetValue(cccd, out var hocBaThiSinh))
+                {
+                    thiSinhKhongHocBa.Add(cccd);
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongHocBa"));
+                    continue;
+                }
+
+                // Có học bạ -> lấy điểm theo các lớp
+                var lopHB10 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 10);
+                var lopHB11 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 11);
+                var lopHB12 = hocBaThiSinh.FirstOrDefault(r => r.Lop == 12);
+                var cacNamRecord = new[] { lopHB10, lopHB11, lopHB12 };
+
+                if (nganhEntity == null || nganhEntity.ToHopNganhs == null || !nganhEntity.ToHopNganhs.Any())
+                {
+                    maNganhKhongTimThay.Add(maNganh);
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
+                    continue;
+                }
+
+                bool hasAnyValidToHop = false;
+                bool hasAnyScoreData = false;
+
+                foreach (var toHopNganh in nganhEntity.ToHopNganhs)
+                {
+                    var toHop = toHopNganh.ToHopMon;
+                    if (toHop == null || toHop.MonHocs == null || !toHop.MonHocs.Any()) continue;
+
+                    bool toHopDu = true;
+                    foreach (var record in cacNamRecord)
+                    {
+                        foreach (var monHoc in toHop.MonHocs)
+                        {
+                            decimal? diem = record == null ? null : GetScore(record, monHoc.FieldName);
+                            if (diem != null)
+                            {
+                                hasAnyScoreData = true;
+                            }
+                            else
+                            {
+                                toHopDu = false;
+                            }
+                        }
+                    }
+
+                    if (toHopDu)
+                    {
+                        hasAnyValidToHop = true;
+                    }
+                }
+
+                if (hasAnyValidToHop)
+                {
+                    // Có ít nhất 1 tổ hợp đạt đủ điểm ở 3 năm
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "CoToHopDu"));
+                }
+                else if (!hasAnyScoreData)
+                {
+                    // Có file học bạ nhưng bỏ trống toàn bộ điểm CN
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "KhongDiemCN"));
+                }
+                else
+                {
+                    // Có điểm học bạ nhưng tất cả các tổ hợp của ngành đều bị thiếu điểm
+                    listNVThongKe.Add((cccd, thuTuNV, maNganh, tenNganh, "ThieuMoiToHop"));
+                }
+            }
+
+            var thongKeTongHop = new ThongKeTongHopViewModel
+            {
+                TongDongNguyenVong = listNVThongKe.Count,
+                TongThiSinhDuyNhat = listNVThongKe.Select(x => x.Cccd).Distinct().Count(),
+                NguyenVongCoToHopDu = listNVThongKe.Count(x => x.Loai == "CoToHopDu"),
+                NguyenVongThieuMoiToHop = listNVThongKe.Count(x => x.Loai == "ThieuMoiToHop"),
+                NguyenVongKhongHocBa = listNVThongKe.Count(x => x.Loai == "KhongHocBa"),
+                NguyenVongKhongDiemCN = listNVThongKe.Count(x => x.Loai == "KhongDiemCN"),
+                NguyenVongBoQua = listNVThongKe.Count(x => x.Loai == "BoQua"),
+
+                DanhSachThieuMoiToHop = listNVThongKe.Where(x => x.Loai == "ThieuMoiToHop")
+                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+                DanhSachKhongHocBa = listNVThongKe.Where(x => x.Loai == "KhongHocBa")
+                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+                DanhSachKhongDiemCN = listNVThongKe.Where(x => x.Loai == "KhongDiemCN")
+                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+                DanhSachBoQua = listNVThongKe.Where(x => x.Loai == "BoQua")
+                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList()
+            };
+
+            var thongKeTheoNganh = listNVThongKe
+                .GroupBy(x => new { x.MaNganh, x.TenNganh })
+                .Select(g =>
+                {
+                    int tongNV = g.Count();
+                    int soThiSinh = g.Select(x => x.Cccd).Distinct().Count();
+                    int nvCoToHopDu = g.Count(x => x.Loai == "CoToHopDu");
+                    int nvThieuMoiToHop = g.Count(x => x.Loai == "ThieuMoiToHop");
+                    int nvKhongDiemCN = g.Count(x => x.Loai == "KhongDiemCN");
+                    int nvKhongHocBa = g.Count(x => x.Loai == "KhongHocBa");
+                    int nvBoQua = g.Count(x => x.Loai == "BoQua");
+                    int tongThieu = nvThieuMoiToHop + nvKhongDiemCN + nvKhongHocBa;
+                    double tyLeThieu = tongNV > 0 ? Math.Round((double)tongThieu / tongNV * 100, 2) : 0;
+
+                    return new ThongKeTheoNganhItemViewModel
+                    {
+                        MaXetTuyen = g.Key.MaNganh,
+                        TenNganh = g.Key.TenNganh,
+                        TongNV = tongNV,
+                        SoThiSinh = soThiSinh,
+                        NVCoToHopDu = nvCoToHopDu,
+                        NVThieuMoiToHop = nvThieuMoiToHop,
+                        NVKhongDiemCN = nvKhongDiemCN,
+                        NVKhongHocBa = nvKhongHocBa,
+                        NVBoQua = nvBoQua,
+                        TyLeThieu = tyLeThieu
+                    };
+                })
+                .OrderByDescending(x => x.TongNV)
+                .ToList();
+
             ketQua.TongLoiKhongTimThayNganh = maNganhKhongTimThay.Count;
             ketQua.DanhSachMaNganhKhongTim = maNganhKhongTimThay.ToList();
             ketQua.DanhSachThieuDiem = ketQuaThieuDiem;
+
+            ketQua.ThongKeTongHop = thongKeTongHop;
+            ketQua.ThongKeTheoNganh = thongKeTheoNganh;
+
             ketQua.ThanhCong = true;
             if (maNganhKhongTimThay.Count > 0)
             {
@@ -666,7 +832,8 @@ namespace TuyenSinh.Services
             var list = new List<HocBaTHPTImport>();
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            using (var stream = new MemoryStream(System.IO.File.ReadAllBytes(filePath)))
+            using (var package = new ExcelPackage(stream))
             {
                 var sheet = package.Workbook.Worksheets[0];
                 int totalRows = sheet.Dimension.End.Row;
@@ -795,7 +962,8 @@ namespace TuyenSinh.Services
             var list = new List<KetQuaNguyenVongImport>();
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            using (var stream = new MemoryStream(System.IO.File.ReadAllBytes(filePath)))
+            using (var package = new ExcelPackage(stream))
             {
                 var sheet = package.Workbook.Worksheets[0];
                 int totalRows = sheet.Dimension.End.Row;
@@ -858,7 +1026,10 @@ namespace TuyenSinh.Services
         }
         private decimal? GetScore(HocBaTHPTImport record, string fieldName)
         {
-            if (Enum.TryParse<MaMonHoc>(fieldName.ToUpper(), out var maMon))
+            if (record == null || string.IsNullOrWhiteSpace(fieldName)) return null;
+
+            var code = fieldName.Trim().ToUpper();
+            if (Enum.TryParse<MaMonHoc>(code, out var maMon))
             {
                 return maMon switch
                 {
@@ -871,12 +1042,19 @@ namespace TuyenSinh.Services
                     MaMonHoc.DI => record.DiaLyCN,
                     MaMonHoc.GD => record.GDCDCN,
                     MaMonHoc.TI => record.TinHocCN,
-                    MaMonHoc.CN => record.CNCNCN,
-                    MaMonHoc.NN => record.NgoaiNguCN,
+                    MaMonHoc.CNCN => record.CNCNCN,
+                    MaMonHoc.N1 or MaMonHoc.N2 or MaMonHoc.N3 or MaMonHoc.N4 or MaMonHoc.N5 or MaMonHoc.N6 => GetNgoaiNguScore(record, code),
                     _ => null
                 };
             }
-            return null;
+
+            return code switch
+            {
+                "KTPL" => record.KTPLCN,
+                "CNNN" => record.CNNNCN,
+                "CNCN" => record.CNCNCN,
+                _ => null
+            };
         }
 
         private string LayTenHienThiMonHocCN(string fieldName)
@@ -894,12 +1072,34 @@ namespace TuyenSinh.Services
                     MaMonHoc.DI => "Địa lí CN",
                     MaMonHoc.GD => "GDCD CN",
                     MaMonHoc.TI => "Tin học CN",
-                    MaMonHoc.CN => "Công nghệ CN",
+                    MaMonHoc.CNCN => "CNCN CN",
                     MaMonHoc.NN => "Ngoại ngữ CN",
                     _ => fieldName + " CN"
                 };
             }
             return fieldName + " CN";
+        }
+
+        private decimal? GetNgoaiNguScore(HocBaTHPTImport record, string code)
+        {
+            if (record == null) return null;
+
+            var mon1 = record.MonNgoaiNgu?.Trim().ToUpper();
+            var mon2 = record.MonNgoaiNgu2?.Trim().ToUpper();
+
+            // 1. Nếu Môn ngoại ngữ 1 khớp mã yêu cầu -> lấy điểm Ngoại ngữ CN (dự phòng Ngoại ngữ 2 CN)
+            if (!string.IsNullOrEmpty(mon1) && mon1.Equals(code, StringComparison.OrdinalIgnoreCase))
+            {
+                return record.NgoaiNguCN ?? record.NgoaiNgu2CN;
+            }
+
+            // 2. Nếu Môn ngoại ngữ 2 khớp mã yêu cầu -> lấy điểm Ngoại ngữ 2 CN (dự phòng Ngoại ngữ CN)
+            if (!string.IsNullOrEmpty(mon2) && mon2.Equals(code, StringComparison.OrdinalIgnoreCase))
+            {
+                return record.NgoaiNgu2CN ?? record.NgoaiNguCN;
+            }
+
+            return null;
         }
 
         private int? ParseInt(object? val)
@@ -927,6 +1127,146 @@ namespace TuyenSinh.Services
             var s = val.ToString()?.Replace(",", ".").Trim();
             if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal res)) return res;
             return null;
+        }
+
+        public async Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelThieuDiemToHopAsync(string excelId)
+        {
+            if (string.IsNullOrEmpty(excelId))
+            {
+                return (false, "Excel không hợp lệ.", null);
+            }
+
+            var result = await CheckHocBaAsync(excelId);
+            if (!result.ThanhCong)
+            {
+                return (false, result.ThongBao ?? "Kiểm tra học bạ không thành công.", null);
+            }
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Thí sinh thiếu điểm");
+
+                // Headers
+                worksheet.Cells[1, 1].Value = "STT";
+                worksheet.Cells[1, 2].Value = "Số ĐDCN (CCCD)";
+                worksheet.Cells[1, 3].Value = "Họ và tên";
+                worksheet.Cells[1, 4].Value = "Năm lỗi";
+                worksheet.Cells[1, 5].Value = "Tổ hợp";
+                worksheet.Cells[1, 6].Value = "Môn bị thiếu điểm";
+
+                // Styling headers
+                using (var range = worksheet.Cells[1, 1, 1, 6])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                    range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+                }
+
+                // Data
+                int row = 2;
+                foreach (var item in result.DanhSachThieuDiem)
+                {
+                    worksheet.Cells[row, 1].Value = item.Stt;
+                    worksheet.Cells[row, 2].Value = item.Cccd;
+                    worksheet.Cells[row, 3].Value = item.HoVaTen;
+                    worksheet.Cells[row, 4].Value = item.NamLoi;
+                    worksheet.Cells[row, 5].Value = item.ToHop;
+                    worksheet.Cells[row, 6].Value = item.MonThieu;
+                    row++;
+                }
+
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                return (true, "", package.GetAsByteArray());
+            }
+        }
+
+        public async Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelKetQuaDoiChieuAsync(string hocBaFileId, string nguyenVongFileId)
+        {
+            if (string.IsNullOrEmpty(hocBaFileId) || string.IsNullOrEmpty(nguyenVongFileId))
+                return (false, "Yêu cầu không hợp lệ.", null);
+
+            var result = await DoiChieuHocBaVaNguyenVongAsync(hocBaFileId, nguyenVongFileId);
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Đối chiếu HB - NV");
+
+            // Headers
+            string[] headers = { "STT", "Số ĐDCN (CCCD)", "Họ và Tên", "TT Nguyện Vọng", "Mã Ngành", "Tên Ngành", "Mã Tổ Hợp", "Năm Học", "Môn Thiếu" };
+            for (int c = 0; c < headers.Length; c++)
+                ws.Cells[1, c + 1].Value = headers[c];
+
+            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+            }
+
+            int row = 2;
+            foreach (var item in result.DanhSachThieuDiem)
+            {
+                ws.Cells[row, 1].Value = item.Stt;
+                ws.Cells[row, 2].Value = item.SoDDCN;
+                ws.Cells[row, 3].Value = item.HoVaTen;
+                ws.Cells[row, 4].Value = item.ThuTuNV;
+                ws.Cells[row, 5].Value = item.MaNganh;
+                ws.Cells[row, 6].Value = item.TenNganh;
+                ws.Cells[row, 7].Value = item.MaToHop;
+                ws.Cells[row, 8].Value = item.NamHoc;
+                ws.Cells[row, 9].Value = item.MonThieu;
+                row++;
+            }
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            return (true, "", package.GetAsByteArray());
+        }
+
+        public async Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelKiemTraDiemSanAsync(string maNganh, string fileId)
+        {
+            if (string.IsNullOrEmpty(fileId))
+                return (false, "Yêu cầu không hợp lệ.", null);
+
+            var result = await KiemTraDiemSan(maNganh, fileId);
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Kiểm tra điểm sàn");
+
+            string[] headers = { "STT", "Họ và Tên", "Số ĐDCN (CCCD)", "Mã Ngành", "Tổ Hợp", "Điểm Xét Tuyển", "Điểm Sàn Ngành", "Điểm Sàn Toán", "Ghi Chú Lỗi" };
+            for (int c = 0; c < headers.Length; c++)
+                ws.Cells[1, c + 1].Value = headers[c];
+
+            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+            }
+
+            int row = 2;
+            int stt = 1;
+            foreach (var item in result.DanhSachKiemTraDiemSan)
+            {
+                ws.Cells[row, 1].Value = stt++;
+                ws.Cells[row, 2].Value = item.HoTen;
+                ws.Cells[row, 3].Value = item.CCCD;
+                ws.Cells[row, 4].Value = item.MaNganh;
+                ws.Cells[row, 5].Value = item.ToHop;
+                ws.Cells[row, 6].Value = item.DiemXetTuyen;
+                ws.Cells[row, 7].Value = item.DiemSan;
+                ws.Cells[row, 8].Value = item.DiemSanToan;
+                ws.Cells[row, 9].Value = item.GhiChu;
+                row++;
+            }
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            return (true, "", package.GetAsByteArray());
         }
 
         private DateTime? ParseDateTime(object? val)
