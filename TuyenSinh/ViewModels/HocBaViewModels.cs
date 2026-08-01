@@ -78,10 +78,30 @@ namespace TuyenSinh.ViewModels
         public string TenNganh { get; set; } = string.Empty;
     }
 
+    public class ThiSinhBiAnhHuongItem
+    {
+        public int Stt { get; set; }
+        public string Cccd { get; set; } = string.Empty;
+        public string HoVaTen { get; set; } = string.Empty;
+        public int SoNVLoi { get; set; }
+        public string ChiTietNVLoi { get; set; } = string.Empty;
+    }
+
+    public class NganhBiAnhHuongItem
+    {
+        public int Stt { get; set; }
+        public string MaXetTuyen { get; set; } = string.Empty;
+        public string TenNganh { get; set; } = string.Empty;
+        public int SoThiSinhBiAnhHuong { get; set; }
+        public int SoNVLoi { get; set; }
+    }
+
     public class ThongKeTongHopViewModel
     {
         public int TongDongNguyenVong { get; set; }
         public int TongThiSinhDuyNhat { get; set; }
+        public int TongThiSinhBiAnhHuong { get; set; }
+        public int TongNganhBiAnhHuong { get; set; }
         public int NguyenVongCoToHopDu { get; set; }
         public int NguyenVongThieuMoiToHop { get; set; }
         public int NguyenVongKhongHocBa { get; set; }
@@ -92,6 +112,9 @@ namespace TuyenSinh.ViewModels
         public List<ChiTietNguyenVongLoiItem> DanhSachKhongHocBa { get; set; } = new();
         public List<ChiTietNguyenVongLoiItem> DanhSachKhongDiemCN { get; set; } = new();
         public List<ChiTietNguyenVongLoiItem> DanhSachBoQua { get; set; } = new();
+
+        public List<ThiSinhBiAnhHuongItem> DanhSachThiSinhBiAnhHuong { get; set; } = new();
+        public List<NganhBiAnhHuongItem> DanhSachNganhBiAnhHuong { get; set; } = new();
     }
 
     public class ThongKeTheoNganhItemViewModel

@@ -13,7 +13,11 @@ $(document).ready(function () {
                 }
 
                 lastResultData = json.data || [];
-                $('#badgeTongDongChiTietLoi').text((lastResultData.length || 0).toLocaleString() + ' dòng');
+                const tongDong = lastResultData.length || 0;
+                const uniqueThiSinh = new Set(lastResultData.map(item => item.SoDDCN).filter(cccd => cccd)).size;
+
+                $('#statTongDongThieuDiem').text(tongDong.toLocaleString() + ' dòng');
+                $('#statTongThiSinhThieuDiem').text(uniqueThiSinh.toLocaleString() + ' thí sinh');
 
                 // 1. Render Table 1: Thống kê tổng hợp
                 $('#summaryLoading').addClass('d-none');
@@ -22,6 +26,8 @@ $(document).ready(function () {
                 const th = json.thongKeTongHop || {};
                 $('#statTongDongNV').text((th.TongDongNguyenVong || 0).toLocaleString());
                 $('#statTongThiSinh').text((th.TongThiSinhDuyNhat || 0).toLocaleString());
+                $('#statTongThiSinhBiAnhHuong').text((th.TongThiSinhBiAnhHuong || 0).toLocaleString());
+                $('#statTongNganhBiAnhHuong').text((th.TongNganhBiAnhHuong || 0).toLocaleString());
                 $('#statNVCoToHopDu').text((th.NguyenVongCoToHopDu || 0).toLocaleString());
                 $('#statNVThieuMoiToHop').text((th.NguyenVongThieuMoiToHop || 0).toLocaleString());
                 $('#statNVKhongHocBa').text((th.NguyenVongKhongHocBa || 0).toLocaleString());
@@ -32,7 +38,9 @@ $(document).ready(function () {
                     ThieuMoiToHop: th.DanhSachThieuMoiToHop || [],
                     KhongHocBa: th.DanhSachKhongHocBa || [],
                     KhongDiemCN: th.DanhSachKhongDiemCN || [],
-                    BoQua: th.DanhSachBoQua || []
+                    BoQua: th.DanhSachBoQua || [],
+                    ThiSinhBiAnhHuong: th.DanhSachThiSinhBiAnhHuong || [],
+                    NganhBiAnhHuong: th.DanhSachNganhBiAnhHuong || []
                 };
 
                 // 2. Render Table 2: Thống kê theo ngành
@@ -265,6 +273,66 @@ $(document).ready(function () {
         modal.show();
     }
 
+    // Modal 2: Chi tiết Thí sinh bị ảnh hưởng (Không trùng CCCD)
+    function openThiSinhBiAnhHuongModal() {
+        const list = (window.groupLists || {}).ThiSinhBiAnhHuong || [];
+        const topCount = Math.min(50, list.length);
+        $('#badgeModalThiSinhCount').text(`Top ${topCount} / ${list.length} thí sinh`);
+
+        const top50 = list.slice(0, 50);
+        if (top50.length === 0) {
+            $('#tbodyThiSinhBiAnhHuong').html(`
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">Không có thí sinh bị ảnh hưởng.</td>
+                </tr>
+            `);
+        } else {
+            const html = top50.map((item, index) => `
+                <tr>
+                    <td class="text-center text-muted">${item.Stt || (index + 1)}</td>
+                    <td class="fw-semibold text-dark">${item.Cccd || ''}</td>
+                    <td class="fw-semibold text-dark">${item.HoVaTen || ''}</td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${item.SoNVLoi || 0} NV</span></td>
+                    <td class="text-truncate small text-muted" style="max-width: 300px;" title="${item.ChiTietNVLoi || ''}">${item.ChiTietNVLoi || ''}</td>
+                </tr>
+            `).join('');
+            $('#tbodyThiSinhBiAnhHuong').html(html);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalThiSinhBiAnhHuong'));
+        modal.show();
+    }
+
+    // Modal 3: Chi tiết Ngành bị ảnh hưởng (Không trùng Ngành)
+    function openNganhBiAnhHuongModal() {
+        const list = (window.groupLists || {}).NganhBiAnhHuong || [];
+        const topCount = Math.min(50, list.length);
+        $('#badgeModalNganhCount').text(`Top ${topCount} / ${list.length} ngành`);
+
+        const top50 = list.slice(0, 50);
+        if (top50.length === 0) {
+            $('#tbodyNganhBiAnhHuong').html(`
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">Không có ngành bị ảnh hưởng.</td>
+                </tr>
+            `);
+        } else {
+            const html = top50.map((item, index) => `
+                <tr>
+                    <td class="text-center text-muted">${item.Stt || (index + 1)}</td>
+                    <td><span class="badge bg-light text-dark border">${item.MaXetTuyen || ''}</span></td>
+                    <td class="fw-semibold text-dark">${item.TenNganh || ''}</td>
+                    <td class="text-center fw-semibold text-dark">${item.SoThiSinhBiAnhHuong || 0} thí sinh</td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${item.SoNVLoi || 0} NV</span></td>
+                </tr>
+            `).join('');
+            $('#tbodyNganhBiAnhHuong').html(html);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalNganhBiAnhHuong'));
+        modal.show();
+    }
+
     // ---- Bảng Thống kê tổng hợp – click handlers ----
     $('#statNVThieuMoiToHop').click(function () {
         openGroupModal('ThieuMoiToHop', 'Danh sách nguyện vọng thiếu môn trong tổ hợp',
@@ -277,6 +345,12 @@ $(document).ready(function () {
     $('#statNVKhongDiemCN').click(function () {
         openGroupModal('KhongDiemCN', 'Danh sách nguyện vọng có điểm CN NULL',
             (window.groupLists || {}).KhongDiemCN || []);
+    });
+    $('#statTongThiSinhBiAnhHuong').click(function () {
+        openThiSinhBiAnhHuongModal();
+    });
+    $('#statTongNganhBiAnhHuong').click(function () {
+        openNganhBiAnhHuongModal();
     });
     $('#statNguyenVongBoQua').click(function () {
         openGroupModal('BoQua', 'Danh sách nguyện vọng bị bỏ qua',
@@ -298,7 +372,57 @@ $(document).ready(function () {
         openGroupModal(loai, title, list);
     });
 
-    // ---- Export Excel trong Modal ----
+    // ---- Export Excel cho Modal Thí sinh bị ảnh hưởng ----
+    $('#btnExportThiSinhExcel').click(function () {
+        const list = (window.groupLists || {}).ThiSinhBiAnhHuong || [];
+        if (!list || list.length === 0) {
+            Swal.fire('Chưa có dữ liệu', 'Không có dữ liệu thí sinh để xuất.', 'warning');
+            return;
+        }
+
+        const headers = ['STT', 'Số ĐDCN (CCCD)', 'Họ và Tên', 'Số NV Lỗi', 'Chi Tiết Nguyện Vọng & Ngành Lỗi'];
+        const rows = list.map((item, idx) => [
+            idx + 1,
+            item.Cccd || '',
+            item.HoVaTen || '',
+            item.SoNVLoi || 0,
+            item.ChiTietNVLoi || ''
+        ]);
+
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ThiSinhBiAnhHuong');
+            XLSX.writeFile(wb, 'DanhSach_ThiSinh_BiAnhHuong.xlsx');
+        }
+    });
+
+    // ---- Export Excel cho Modal Ngành bị ảnh hưởng ----
+    $('#btnExportNganhExcel').click(function () {
+        const list = (window.groupLists || {}).NganhBiAnhHuong || [];
+        if (!list || list.length === 0) {
+            Swal.fire('Chưa có dữ liệu', 'Không có dữ liệu ngành để xuất.', 'warning');
+            return;
+        }
+
+        const headers = ['STT', 'Mã Xét Tuyển', 'Tên Ngành Xét Tuyển', 'Số Thí Sinh Bị Ảnh Hưởng', 'Số NV Bị Lỗi'];
+        const rows = list.map((item, idx) => [
+            idx + 1,
+            item.MaXetTuyen || '',
+            item.TenNganh || '',
+            item.SoThiSinhBiAnhHuong || 0,
+            item.SoNVLoi || 0
+        ]);
+
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'NganhBiAnhHuong');
+            XLSX.writeFile(wb, 'DanhSach_Nganh_BiAnhHuong.xlsx');
+        }
+    });
+
+    // ---- Export Excel trong Modal Nóm lỗi chung ----
     $('#btnExportGroupCsv').click(function () {
         if (!currentGroupData || currentGroupData.length === 0) {
             Swal.fire('Chưa có dữ liệu', 'Không có dữ liệu để xuất.', 'warning');

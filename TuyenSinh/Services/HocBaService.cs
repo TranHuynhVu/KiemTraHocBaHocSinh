@@ -543,10 +543,61 @@ namespace TuyenSinh.Services
                 .ThenBy(x => x.ThuTuNV)
                 .ToList();
 
+            var listNVLoi = listNVThongKe
+                .Where(x => x.Loai == "ThieuMoiToHop" || x.Loai == "KhongHocBa" || x.Loai == "KhongDiemCN")
+                .ToList();
+
+            var dsThiSinhBiAnhHuong = listNVLoi
+                .GroupBy(x => x.Cccd)
+                .Select((g, idx) =>
+                {
+                    var cccd = g.Key;
+                    var hoTen = hocBaTheoCccd.TryGetValue(cccd, out var hbList) && hbList.Any()
+                        ? hbList.First().HoVaTen
+                        : "Chưa có học bạ";
+
+                    var chiTietList = g.Select(x =>
+                    {
+                        string loaiText = x.Loai switch
+                        {
+                            "KhongHocBa" => "Không có học bạ",
+                            "KhongDiemCN" => "Trống điểm CN",
+                            "ThieuMoiToHop" => "Thiếu điểm mọi tổ hợp",
+                            _ => x.Loai
+                        };
+                        return $"NV{x.ThuTuNV}: {x.MaNganh} ({loaiText})";
+                    });
+
+                    return new ThiSinhBiAnhHuongItem
+                    {
+                        Stt = idx + 1,
+                        Cccd = cccd,
+                        HoVaTen = hoTen ?? "Chưa có học bạ",
+                        SoNVLoi = g.Count(),
+                        ChiTietNVLoi = string.Join("; ", chiTietList)
+                    };
+                })
+                .ToList();
+
+            var dsNganhBiAnhHuong = listNVLoi
+                .GroupBy(x => new { x.MaNganh, x.TenNganh })
+                .Select((g, idx) => new NganhBiAnhHuongItem
+                {
+                    Stt = idx + 1,
+                    MaXetTuyen = g.Key.MaNganh,
+                    TenNganh = g.Key.TenNganh,
+                    SoThiSinhBiAnhHuong = g.Select(x => x.Cccd).Distinct().Count(),
+                    SoNVLoi = g.Count()
+                })
+                .OrderByDescending(x => x.SoNVLoi)
+                .ToList();
+
             var thongKeTongHop = new ThongKeTongHopViewModel
             {
                 TongDongNguyenVong = listNVThongKe.Count,
                 TongThiSinhDuyNhat = listNVThongKe.Select(x => x.Cccd).Distinct().Count(),
+                TongThiSinhBiAnhHuong = dsThiSinhBiAnhHuong.Count,
+                TongNganhBiAnhHuong = dsNganhBiAnhHuong.Count,
                 NguyenVongCoToHopDu = listNVThongKe.Count(x => x.Loai == "CoToHopDu"),
                 NguyenVongThieuMoiToHop = listNVThongKe.Count(x => x.Loai == "ThieuMoiToHop"),
                 NguyenVongKhongHocBa = listNVThongKe.Count(x => x.Loai == "KhongHocBa"),
@@ -560,7 +611,10 @@ namespace TuyenSinh.Services
                 DanhSachKhongDiemCN = listNVThongKe.Where(x => x.Loai == "KhongDiemCN")
                     .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
                 DanhSachBoQua = listNVThongKe.Where(x => x.Loai == "BoQua")
-                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList()
+                    .Select(x => new ChiTietNguyenVongLoiItem { Cccd = x.Cccd, ThuTuNV = x.ThuTuNV, MaXetTuyen = x.MaNganh, TenNganh = x.TenNganh }).ToList(),
+
+                DanhSachThiSinhBiAnhHuong = dsThiSinhBiAnhHuong,
+                DanhSachNganhBiAnhHuong = dsNganhBiAnhHuong
             };
 
             var thongKeTheoNganh = listNVThongKe
@@ -1126,7 +1180,50 @@ namespace TuyenSinh.Services
                     row++;
                 }
 
-                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                if (result.DanhSachThieuDiem.Count > 0)
+                {
+                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                }
+
+                // Sheet 2: Danh sách sinh viên thiếu điểm (Không trùng)
+                var ws2 = package.Workbook.Worksheets.Add("Danh sách sinh viên thiếu điểm");
+
+                string[] headers2 = { "STT", "Số ĐDCN (CCCD)", "Họ và Tên", "Tổ hợp thiếu điểm" };
+                for (int c = 0; c < headers2.Length; c++)
+                    ws2.Cells[1, c + 1].Value = headers2[c];
+
+                using (var range2 = ws2.Cells[1, 1, 1, headers2.Length])
+                {
+                    range2.Style.Font.Bold = true;
+                    range2.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range2.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                    range2.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+                }
+
+                var dsThiSinhUnique = result.DanhSachThieuDiem
+                    .GroupBy(x => x.Cccd)
+                    .Select((g, idx) => new
+                    {
+                        Stt = idx + 1,
+                        Cccd = g.Key,
+                        HoVaTen = g.First().HoVaTen,
+                        ToHopThieu = string.Join("; ", g.Select(x => x.ToHop).Distinct())
+                    })
+                    .ToList();
+
+                int row2 = 2;
+                foreach (var item in dsThiSinhUnique)
+                {
+                    ws2.Cells[row2, 1].Value = item.Stt;
+                    ws2.Cells[row2, 2].Value = item.Cccd;
+                    ws2.Cells[row2, 3].Value = item.HoVaTen;
+                    ws2.Cells[row2, 4].Value = item.ToHopThieu;
+                    row2++;
+                }
+                if (dsThiSinhUnique.Count > 0)
+                {
+                    ws2.Cells[ws2.Dimension.Address].AutoFitColumns();
+                }
 
                 return (true, "", package.GetAsByteArray());
             }
@@ -1141,6 +1238,8 @@ namespace TuyenSinh.Services
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
+
+            // Sheet 1: Đối chiếu HB - NV (chi tiết từng nguyện vọng & tổ hợp)
             var ws = package.Workbook.Worksheets.Add("Đối chiếu HB - NV");
 
             // Headers
@@ -1170,7 +1269,52 @@ namespace TuyenSinh.Services
                 ws.Cells[row, 9].Value = item.MonThieu;
                 row++;
             }
-            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+            if (result.DanhSachThieuDiem.Count > 0)
+            {
+                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+            }
+
+            // Sheet 2: Danh sách sinh viên thiếu điểm (Không trùng)
+            var ws2 = package.Workbook.Worksheets.Add("Danh sách sinh viên thiếu điểm");
+
+            string[] headers2 = { "STT", "Số ĐDCN (CCCD)", "Họ và Tên", "Số NV thiếu điểm", "Chi tiết NV & Tổ hợp thiếu" };
+            for (int c = 0; c < headers2.Length; c++)
+                ws2.Cells[1, c + 1].Value = headers2[c];
+
+            using (var range2 = ws2.Cells[1, 1, 1, headers2.Length])
+            {
+                range2.Style.Font.Bold = true;
+                range2.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range2.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
+                range2.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
+            }
+
+            var dsThiSinhUnique = result.DanhSachThieuDiem
+                .GroupBy(x => x.SoDDCN)
+                .Select((g, idx) => new
+                {
+                    Stt = idx + 1,
+                    SoDDCN = g.Key,
+                    HoVaTen = g.First().HoVaTen,
+                    SoNVThieu = g.Select(x => x.ThuTuNV).Distinct().Count(),
+                    ChiTietNV = string.Join("; ", g.Select(x => $"NV{x.ThuTuNV}: {x.TenNganh} ({x.MaToHop})").Distinct())
+                })
+                .ToList();
+
+            int row2 = 2;
+            foreach (var item in dsThiSinhUnique)
+            {
+                ws2.Cells[row2, 1].Value = item.Stt;
+                ws2.Cells[row2, 2].Value = item.SoDDCN;
+                ws2.Cells[row2, 3].Value = item.HoVaTen;
+                ws2.Cells[row2, 4].Value = item.SoNVThieu;
+                ws2.Cells[row2, 5].Value = item.ChiTietNV;
+                row2++;
+            }
+            if (dsThiSinhUnique.Count > 0)
+            {
+                ws2.Cells[ws2.Dimension.Address].AutoFitColumns();
+            }
 
             return (true, "", package.GetAsByteArray());
         }
