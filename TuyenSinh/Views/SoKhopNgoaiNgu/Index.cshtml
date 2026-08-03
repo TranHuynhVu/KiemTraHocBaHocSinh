@@ -1,0 +1,187 @@
+@{
+    ViewData["Title"] = "So khớp dữ liệu 3 file Excel";
+    ViewData["PageTitle"] = "So khớp dữ liệu 3 file Excel";
+    Layout = "_AdminLayout";
+}
+
+<div class="mb-4">
+    <h4 class="mb-1 doichieu-page-title">So khớp dữ liệu 3 tệp Excel</h4>
+    <p class="text-muted small mb-0">Ghép nối dữ liệu DSHopLeNN, T DSTS và Nguyện vọng theo Định danh cá nhân (ĐDCN).</p>
+</div>
+
+<!-- Upload 3 files card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 px-4">
+        <h5 class="mb-0 doichieu-card-title">
+            <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i>Nạp 3 tệp Excel để so khớp
+        </h5>
+    </div>
+    <div class="card-body">
+        <form id="soKhopForm" method="post" action="/admin/so-khop-ngoai-ngu/thuc-hien-so-khop" enctype="multipart/form-data">
+            <div class="row g-4">
+                <!-- File 1: Nguyện vọng -->
+                <div class="col-md-4">
+                    <label class="form-label doichieu-zone-label">
+                        <i class="fa-solid fa-file-excel text-primary me-1"></i>1. File Nguyện vọng thí sinh
+                    </label>
+                    <div class="doichieu-drop-zone" id="dropZoneNV">
+                        <div class="doichieu-upload-icon">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <p class="small text-muted mb-2">Kéo thả hoặc click để chọn file Nguyện vọng</p>
+                        <span class="doichieu-format-hint">.xlsx</span>
+                        
+                        <div id="fileNVInfo" class="doichieu-file-info d-none mt-2">
+                            <i class="fa-solid fa-file-excel text-primary flex-shrink-0"></i>
+                            <span id="fileNVName" class="doichieu-file-name"></span>
+                        </div>
+                    </div>
+                    <input type="file" name="fileNV" id="fileNV" class="file-input-hidden" accept=".xlsx" required />
+                </div>
+
+                <!-- File 2: Danh sách thí sinh -->
+                <div class="col-md-4">
+                    <label class="form-label doichieu-zone-label">
+                        <i class="fa-solid fa-file-excel text-success me-1"></i>2. File Danh sách thí sinh (DSTS)
+                    </label>
+                    <div class="doichieu-drop-zone" id="dropZoneDSTS">
+                        <div class="doichieu-upload-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <p class="small text-muted mb-2">Kéo thả hoặc click để chọn file DSTS</p>
+                        <span class="doichieu-format-hint">.xlsx</span>
+                        
+                        <div id="fileDSTSInfo" class="doichieu-file-info d-none mt-2">
+                            <i class="fa-solid fa-file-excel text-success flex-shrink-0"></i>
+                            <span id="fileDSTSName" class="doichieu-file-name"></span>
+                        </div>
+                    </div>
+                    <input type="file" name="fileDSTS" id="fileDSTS" class="file-input-hidden" accept=".xlsx" required />
+                </div>
+
+                <!-- File 3: Hợp lệ ngoại ngữ -->
+                <div class="col-md-4">
+                    <label class="form-label doichieu-zone-label">
+                        <i class="fa-solid fa-file-excel text-warning me-1"></i>3. File Hợp lệ Ngoại ngữ
+                    </label>
+                    <div class="doichieu-drop-zone" id="dropZoneNN">
+                        <div class="doichieu-upload-icon">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <p class="small text-muted mb-2">Kéo thả hoặc click để chọn file DSHopLeNN</p>
+                        <span class="doichieu-format-hint">.xlsx</span>
+                        
+                        <div id="fileNNInfo" class="doichieu-file-info d-none mt-2">
+                            <i class="fa-solid fa-file-excel text-warning flex-shrink-0"></i>
+                            <span id="fileNNName" class="doichieu-file-name"></span>
+                        </div>
+                    </div>
+                    <input type="file" name="fileNN" id="fileNN" class="file-input-hidden" accept=".xlsx" required />
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" id="btnSoKhop" class="btn btn-primary btn-submit-upload" disabled>
+                    <i class="fa-solid fa-code-compare me-2"></i>Thực hiện so khớp 3 file
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const errorMessage = '@Html.Raw(TempData["ErrorMessage"] ?? "")';
+
+        $(document).ready(function () {
+            setupDropZone('dropZoneNV', 'fileNV', 'fileNVInfo', 'fileNVName');
+            setupDropZone('dropZoneDSTS', 'fileDSTS', 'fileDSTSInfo', 'fileDSTSName');
+            setupDropZone('dropZoneNN', 'fileNN', 'fileNNInfo', 'fileNNName');
+
+            $('#soKhopForm').on('submit', function () {
+                Swal.fire({
+                    title: 'Đang xử lý so khớp...',
+                    text: 'Hệ thống đang đọc và ghép nối dữ liệu 3 file Excel. Vui lòng đợi trong giây lát...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            });
+
+            if (errorMessage) {
+                Swal.fire('Lỗi', errorMessage, 'error');
+            }
+        });
+
+        function setupDropZone(zoneId, inputId, infoId, nameId) {
+            const $zone = $('#' + zoneId);
+            const $input = $('#' + inputId);
+
+            $zone.on('click', function () {
+                $input.trigger('click');
+            });
+
+            $zone.on('dragover', function (e) {
+                e.preventDefault();
+                $zone.addClass('dragover');
+            });
+
+            $zone.on('dragleave', function () {
+                $zone.removeClass('dragover');
+            });
+
+            $zone.on('drop', function (e) {
+                e.preventDefault();
+                $zone.removeClass('dragover');
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    setFile($input, infoId, nameId, files[0]);
+                }
+            });
+
+            $input.on('change', function () {
+                const files = this.files;
+                if (files.length > 0) {
+                    setFile($input, infoId, nameId, files[0]);
+                }
+            });
+        }
+
+        function setFile($input, infoId, nameId, file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'xlsx') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Định dạng tệp không hợp lệ',
+                    text: 'Hệ thống chỉ hỗ trợ tệp tin Excel định dạng .xlsx.',
+                    confirmButtonColor: '#ff3b30'
+                });
+                $input.val('');
+                $('#' + nameId).text('').attr('title', '');
+                $('#' + infoId).addClass('d-none');
+                checkAll3FilesSelected();
+                return;
+            }
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            $input[0].files = dt.files;
+
+            $('#' + nameId).text(file.name).attr('title', file.name);
+            $('#' + infoId).removeClass('d-none');
+
+            checkAll3FilesSelected();
+        }
+
+        function checkAll3FilesSelected() {
+            const f1 = $('#fileNV')[0].files.length > 0;
+            const f2 = $('#fileDSTS')[0].files.length > 0;
+            const f3 = $('#fileNN')[0].files.length > 0;
+            $('#btnSoKhop').prop('disabled', !(f1 && f2 && f3));
+        }
+    </script>
+}

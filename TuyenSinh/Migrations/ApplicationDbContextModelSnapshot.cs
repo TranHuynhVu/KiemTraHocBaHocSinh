@@ -253,7 +253,7 @@ namespace TuyenSinh.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MonHocs");
+                    b.ToTable("MonHocs", (string)null);
                 });
 
             modelBuilder.Entity("TuyenSinh.Models.Nganh", b =>
@@ -294,7 +294,7 @@ namespace TuyenSinh.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Nganhs");
+                    b.ToTable("Nganhs", (string)null);
                 });
 
             modelBuilder.Entity("TuyenSinh.Models.ToHopMon", b =>
@@ -315,7 +315,7 @@ namespace TuyenSinh.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ToHopMons");
+                    b.ToTable("ToHopMons", (string)null);
                 });
 
             modelBuilder.Entity("TuyenSinh.Models.ToHopNganh", b =>
@@ -338,7 +338,7 @@ namespace TuyenSinh.Migrations
 
                     b.HasIndex("ToHopId");
 
-                    b.ToTable("ToHopNganhs");
+                    b.ToTable("ToHopNganhs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

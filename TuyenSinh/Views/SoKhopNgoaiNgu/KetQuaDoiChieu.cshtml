@@ -1,0 +1,269 @@
+@model TuyenSinh.ViewModels.SoKhopNgoaiNguThongKeViewModel
+@{
+    ViewData["Title"] = "Kết quả so khớp dữ liệu 3 tệp Excel";
+    ViewData["PageTitle"] = "Kết quả so khớp dữ liệu 3 tệp Excel";
+    Layout = "_AdminLayout";
+}
+
+<style>
+    #soKhopTable th {
+        white-space: nowrap;
+        vertical-align: middle;
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    #soKhopTable td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    .badge-mxt {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        background-color: #e5f1ff;
+        color: #007aff;
+        border: 1px solid rgba(0, 122, 255, 0.2);
+        border-radius: 4px;
+    }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-1 doichieu-page-title">Kết quả so khớp dữ liệu 3 tệp Excel</h4>
+        <p class="text-muted small mb-0">Danh sách thí sinh ghép nối dữ liệu từ DSHopLeNN, T DSTS và Nguyện vọng theo ĐDCN.</p>
+    </div>
+    <a href="/admin/so-khop-ngoai-ngu" class="btn btn-outline-secondary btn-sm px-3 btn-back">
+        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại nạp tệp
+    </a>
+</div>
+
+<!-- Summary Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm rounded-8">
+            <div class="card-header bg-white py-3 px-4 border-bottom-light">
+                <h6 class="mb-0 doichieu-card-title text-primary fw-bold">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Thống kê tổng hợp dữ liệu 3 tệp
+                </h6>
+            </div>
+            <div class="card-body py-3 px-4">
+                <div id="summaryLoading" class="text-center py-3">
+                    <i class="fa-solid fa-spinner fa-spin fs-4 text-primary"></i>
+                    <p class="mt-2 text-muted mb-0 small">Đang đối chiếu dữ liệu 3 file Excel...</p>
+                </div>
+                <div id="summaryContent" class="d-none">
+                    <div class="row text-center g-3">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded-8">
+                                <span class="d-block text-muted small fw-semibold">1. Tổng dòng DSHopLeNN</span>
+                                <h4 class="fw-bold text-primary mb-0 mt-1" id="statHopLeNN">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded-8">
+                                <span class="d-block text-muted small fw-semibold">2. Tổng thí sinh DSTS</span>
+                                <h4 class="fw-bold text-success mb-0 mt-1" id="statDSTS">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded-8">
+                                <span class="d-block text-muted small fw-semibold">3. Tổng dòng Nguyện vọng</span>
+                                <h4 class="fw-bold text-warning mb-0 mt-1" id="statNV">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded-8">
+                                <span class="d-block text-muted small fw-semibold">Kết quả Join (Khớp ĐDCN)</span>
+                                <h4 class="fw-bold text-purple mb-0 mt-1" id="statSoKhop" style="color: #8e2de2;">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Data Table Card -->
+<div class="card border-0 shadow-sm rounded-8">
+    <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between border-bottom-light">
+        <div>
+            <h5 class="mb-0 doichieu-card-title d-flex align-items-center">
+                <i class="fa-solid fa-table-list text-primary me-2"></i>
+                <span>Danh sách thí sinh ghép nối dữ liệu theo ĐDCN</span>
+            </h5>
+        </div>
+        <div>
+            <button id="btnExportExcel" class="btn btn-success btn-sm px-3 rounded-5">
+                <i class="fa-solid fa-file-excel me-1"></i>Xuất Excel
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="soKhopTable" class="table table-striped table-bordered w-100 align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center text-nowrap" style="width: 50px;">STT</th>
+                        <th class="text-center text-nowrap" style="width: 90px;">SBD</th>
+                        <th class="text-nowrap" style="min-width: 170px;">Họ và Tên</th>
+                        <th class="text-center text-nowrap" style="width: 100px;">Ngày sinh</th>
+                        <th class="text-center text-nowrap" style="width: 140px;">Số ĐDCN (CCCD)</th>
+                        <th class="text-nowrap" style="min-width: 150px;">Chứng chỉ ngoại ngữ</th>
+                        <th class="text-center text-nowrap" style="width: 90px;">Điểm / Bậc CC</th>
+                        <th class="text-nowrap" style="min-width: 220px;">Mã xét tuyển</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const nvFileId = '@ViewBag.NvFileId';
+        const dstsFileId = '@ViewBag.DstsFileId';
+        const nnFileId = '@ViewBag.NnFileId';
+
+        $(document).ready(function () {
+            const table = $('#soKhopTable').DataTable({
+                ajax: {
+                    url: `/admin/so-khop-ngoai-ngu/lay-ket-qua-so-khop?nvFileId=${nvFileId}&dstsFileId=${dstsFileId}&nnFileId=${nnFileId}`,
+                    dataSrc: function (json) {
+                        if (!json.success) {
+                            Swal.fire('Lỗi', json.message || 'Không thể tải dữ liệu so khớp.', 'error');
+                            $('#summaryLoading').addClass('d-none');
+                            $('#summaryContent').removeClass('d-none');
+                            return [];
+                        }
+
+                        $('#summaryLoading').addClass('d-none');
+                        $('#summaryContent').removeClass('d-none');
+
+                        $('#statHopLeNN').text((json.tongHopLeNN || 0).toLocaleString());
+                        $('#statDSTS').text((json.tongDanhSachThiSinh || 0).toLocaleString());
+                        $('#statNV').text((json.tongNguyenVong || 0).toLocaleString());
+                        $('#statSoKhop').text((json.tongSoKhop || 0).toLocaleString());
+
+                        return json.data || [];
+                    }
+                },
+                processing: true,
+                deferRender: true,
+                autoWidth: false,
+                columns: [
+                    {
+                        data: null,
+                        className: 'text-center fw-bold text-muted text-nowrap',
+                        render: function (data, type, row, meta) {
+                            return meta.row + 1;
+                        }
+                    },
+                    {
+                        data: 'SoBaoDanh',
+                        className: 'text-center font-monospace fw-semibold text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'HoTen',
+                        className: 'fw-semibold text-dark text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'NgaySinh',
+                        className: 'text-center text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'Ddcn',
+                        className: 'text-center font-monospace text-primary fw-bold text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'ChungChiNgoaiNgu',
+                        className: 'text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'DiemBacChungChi',
+                        className: 'text-center fw-bold text-success text-nowrap',
+                        render: function (data) { return escapeHtml(data) || '-'; }
+                    },
+                    {
+                        data: 'MaXetTuyen',
+                        render: function (data) {
+                            if (!data) return '<span class="text-muted small">-</span>';
+                            var codes = data.split(';');
+                            var badgesHtml = codes.map(function(c) {
+                                var codeTrimmed = c.trim();
+                                if (!codeTrimmed) return '';
+                                return `<span class="badge-mxt font-monospace">${escapeHtml(codeTrimmed)}</span>`;
+                            }).join('');
+                            return `<div class="d-flex flex-wrap gap-1">${badgesHtml}</div>`;
+                        }
+                    }
+                ],
+                scrollX: true,
+                scrollY: "480px",
+                scrollCollapse: true,
+                paging: true,
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json'
+                },
+                order: [[0, 'asc']]
+            });
+
+            $('#btnExportExcel').on('click', function () {
+                downloadExcelWithLoading(`/admin/so-khop-ngoai-ngu/xuat-excel?nvFileId=${nvFileId}&dstsFileId=${dstsFileId}&nnFileId=${nnFileId}`, 'KetQua_SoKhop_3File_DSHopLeNN_vs_DSTS_vs_NV.xlsx');
+            });
+        });
+
+        function downloadExcelWithLoading(url, fileName) {
+            Swal.fire({
+                title: 'Đang xuất tệp Excel...',
+                text: 'Hệ thống đang chuẩn bị tệp báo cáo Excel, vui lòng đợi trong giây lát...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                xhrFields: { responseType: 'blob' },
+                success: function (blob) {
+                    Swal.close();
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(downloadUrl);
+                },
+                error: function (xhr, status, error) {
+                    Swal.close();
+                    Swal.fire('Lỗi', 'Không thể xuất tệp Excel: ' + error, 'error');
+                }
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+}
