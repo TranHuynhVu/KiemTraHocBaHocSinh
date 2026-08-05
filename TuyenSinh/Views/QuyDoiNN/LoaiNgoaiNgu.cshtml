@@ -1,0 +1,154 @@
+@model IEnumerable<TuyenSinh.Models.LoaiNgoaiNgu>
+@{
+    ViewData["Title"] = "Quản lý Loại Ngoại ngữ";
+    ViewData["PageTitle"] = "Quản lý Loại Ngoại ngữ";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-1 doichieu-page-title">Quản lý Loại Ngoại ngữ</h4>
+        <p class="text-muted small mb-0">Quản lý các loại chứng chỉ ngoại ngữ (IELTS, VSTEP, TOEIC, TOEFL...).</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="/admin/quy-doi-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+            <i class="fa-solid fa-list-check me-1"></i> Bảng quy đổi điểm
+        </a>
+        <a href="/admin/quy-doi-ngoai-ngu/bac-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+            <i class="fa-solid fa-layer-group me-1"></i> Quản lý Bậc
+        </a>
+        <a href="/admin/quy-doi-ngoai-ngu/loai-ngoai-ngu" class="btn btn-primary btn-sm rounded-5">
+            <i class="fa-solid fa-certificate me-1"></i> Quản lý Loại (@Model.Count())
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Form Thêm Loại Mới -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-5">
+            <div class="card-header bg-white py-3 px-4">
+                <h5 class="mb-0 quydoi-header-title">Thêm loại ngoại ngữ</h5>
+            </div>
+            <div class="card-body">
+                <form asp-controller="QuyDoiNN" asp-action="ThemLoai" method="post">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Tên loại ngoại ngữ / Chứng chỉ</label>
+                        <input type="text" name="tenLoai" class="form-control" placeholder="Ví dụ: TOEIC" required />
+                        <div class="form-text text-muted small">Tên chứng chỉ tiếng Anh (IELTS, VSTEP, TOEIC...).</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2 rounded-5">
+                        <i class="fa-solid fa-plus me-1"></i> Thêm loại ngoại ngữ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách Loại -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-5">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 quydoi-header-title">Danh sách Loại Ngoại ngữ</h5>
+                <span class="quydoi-standard-tag">@Model.Count() Loại</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary font-weight-600 table-xs">
+                            <tr>
+                                <th class="ps-4 py-3 col-w-80">ID</th>
+                                <th class="py-3">Tên loại ngoại ngữ / Chứng chỉ</th>
+                                <th class="pe-4 py-3 text-end col-w-200">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-folder-open fa-2x mb-3 d-block text-secondary opacity-50"></i>
+                                        Chưa có loại ngoại ngữ nào.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="ps-4 font-weight-600 text-muted">@item.Id</td>
+                                        <td class="font-weight-600 text-main">
+                                            <i class="fa-solid fa-award text-warning me-2"></i>@item.TenLoai
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <button type="button" class="btn btn-outline-primary btn-sm me-2 rounded-5" 
+                                                    data-bs-toggle="modal" data-bs-target="#editModal-@item.Id">
+                                                <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm rounded-5" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                                <i class="fa-solid fa-trash"></i> Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal Sửa Loại -->
+                                    <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content quydoi-modal-content">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700 text-main">Chỉnh sửa loại ngoại ngữ</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="QuyDoiNN" asp-action="SuaLoai" method="post">
+                                                    <div class="modal-body p-4 text-start">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-500">Tên loại ngoại ngữ</label>
+                                                            <input type="text" name="tenLoai" value="@item.TenLoai" class="form-control" required />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2 rounded-5">Cập nhật</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Xóa Loại -->
+                                    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content quydoi-modal-content">
+                                                <div class="modal-header bg-light border-0 py-3 px-4">
+                                                    <h5 class="modal-title font-weight-700 text-danger">Xác nhận xóa Loại</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-controller="QuyDoiNN" asp-action="XoaLoai" method="post">
+                                                    <div class="modal-body p-4 text-center">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
+                                                        <p class="mb-1 fw-semibold text-main fs-6">Bạn có chắc chắn muốn xóa Loại này?</p>
+                                                        <div class="bg-light p-3 rounded-3 mt-3 font-weight-600">
+                                                            @item.TenLoai
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2 rounded-5">Xóa</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

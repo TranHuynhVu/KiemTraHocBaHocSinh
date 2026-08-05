@@ -37,6 +37,7 @@ builder.Services.AddScoped<IToHopMonService, ToHopMonService>();
 builder.Services.AddScoped<IHocBaService, HocBaService>();
 builder.Services.AddScoped<INganhService, NganhService>();
 builder.Services.AddScoped<ISoKhopNgoaiNguService, SoKhopNgoaiNguService>();
+builder.Services.AddScoped<IQuyDoiNNService, QuyDoiNNService>();
 
 // Configure Hangfire Services
 builder.Services.AddHangfire(config => config
@@ -56,9 +57,25 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 
-
-
 var app = builder.Build();
+
+// Auto migration & seed database
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        context.Database.EnsureCreated();
+        await DbInitializer.SeedAsync(context, userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Lỗi khởi tạo DB: " + ex.Message);
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

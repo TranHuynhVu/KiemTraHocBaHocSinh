@@ -56,6 +56,12 @@
                 </a>
             </li>
             <li class="sidebar-item">
+                <a href="/admin/quy-doi-ngoai-ngu" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "QuyDoiNN" ? "active" : "")">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Quản lý quy đổi ngoại ngữ</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
                 <a href="/admin/hoc-ba" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HocBa" && ViewContext.RouteData.Values["action"]?.ToString() == "KiemTraHocBa" ? "active" : "")">
                     <i class="fa-solid fa-clipboard-check"></i>
                     <span>Kiểm tra học bạ</span>

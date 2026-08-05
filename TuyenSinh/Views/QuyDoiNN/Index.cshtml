@@ -1,0 +1,343 @@
+@model IEnumerable<TuyenSinh.Models.QuyDoiNN>
+@{
+    ViewData["Title"] = "Quản lý Quy đổi Ngoại ngữ";
+    ViewData["PageTitle"] = "Quản lý Quy đổi Ngoại ngữ";
+    Layout = "_AdminLayout";
+
+    var dsBac = ViewBag.DanhSachBac as List<TuyenSinh.Models.BacNgoaiNgu> ?? new List<TuyenSinh.Models.BacNgoaiNgu>();
+    var dsLoai = ViewBag.DanhSachLoai as List<TuyenSinh.Models.LoaiNgoaiNgu> ?? new List<TuyenSinh.Models.LoaiNgoaiNgu>();
+
+    // Thống kê ma trận động từ CSDL
+    var matrixCols = new List<(TuyenSinh.Models.BacNgoaiNgu Bac, decimal DiemQuyDoi, Dictionary<int, TuyenSinh.Models.QuyDoiNN> RulesByLoai)>();
+
+    foreach (var bac in dsBac)
+    {
+        var bacRules = Model.Where(r => r.BacNgoaiNguId == bac.Id).ToList();
+        if (!bacRules.Any()) continue;
+
+        var groupedByScore = bacRules.GroupBy(r => r.DiemQuyDoi).OrderBy(g => g.Key);
+        foreach (var group in groupedByScore)
+        {
+            int maxSlots = group.GroupBy(r => r.LoaiNgoaiNguId).Max(g => g.Count());
+            for (int i = 0; i < maxSlots; i++)
+            {
+                var slotRules = new Dictionary<int, TuyenSinh.Models.QuyDoiNN>();
+                foreach (var loaiGroup in group.GroupBy(r => r.LoaiNgoaiNguId))
+                {
+                    var ruleList = loaiGroup.OrderBy(r => r.DiemNN).ToList();
+                    if (i < ruleList.Count)
+                    {
+                        slotRules[loaiGroup.Key] = ruleList[i];
+                    }
+                }
+                matrixCols.Add((bac, group.Key, slotRules));
+            }
+        }
+    }
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="mb-1 doichieu-page-title">Quản lý quy đổi ngoại ngữ</h4>
+        <p class="text-muted small mb-0">Cấu hình quy đổi chứng chỉ ngoại ngữ (IELTS, VSTEP...) sang điểm môn Tiếng Anh xét tuyển.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="/admin/quy-doi-ngoai-ngu" class="btn btn-primary btn-sm rounded-5">
+            <i class="fa-solid fa-list-check me-1"></i> Bảng quy đổi điểm
+        </a>
+        <a href="/admin/quy-doi-ngoai-ngu/bac-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+            <i class="fa-solid fa-layer-group me-1"></i> Quản lý Bậc (@dsBac.Count)
+        </a>
+        <a href="/admin/quy-doi-ngoai-ngu/loai-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+            <i class="fa-solid fa-certificate me-1"></i> Quản lý Loại (@dsLoai.Count)
+        </a>
+    </div>
+</div>
+
+<!-- Card Bảng Phụ Lục Quy Đổi Trực Quan (Sinh Động Từ Dữ Liệu CSDL) -->
+@if (matrixCols.Any())
+{
+    <div class="card border-0 shadow-sm mb-4 rounded-5">
+        <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 quydoi-header-title">
+                <i class="fa-solid fa-table text-primary me-2"></i>Bảng phụ lục quy đổi chứng chỉ sang điểm môn Tiếng Anh
+            </h5>
+        </div>
+        <div class="card-body p-3">
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle mb-0 quydoi-matrix-table">
+                    <thead class="quydoi-matrix-head">
+                        <tr>
+                            <th class="py-2 col-w-12-pc">Bậc</th>
+                            @foreach (var bacGroup in matrixCols.GroupBy(c => c.Bac.Id))
+                            {
+                                var bacObj = bacGroup.First().Bac;
+                                <th class="py-2" colspan="@bacGroup.Count()">@bacObj.TenVietTat (@bacObj.TenBac)</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var loai in dsLoai)
+                        {
+                            <tr class="fw-semibold text-main">
+                                <td class="quydoi-matrix-row-head">@loai.TenLoai</td>
+                                @foreach (var col in matrixCols)
+                                {
+                                    if (col.RulesByLoai.TryGetValue(loai.Id, out var rule))
+                                    {
+                                        var valStr = rule.DiemNNDen.HasValue && rule.DiemNNDen.Value > rule.DiemNN
+                                            ? $"{rule.DiemNN.ToString("G29")} - {rule.DiemNNDen.Value.ToString("G29")}"
+                                            : rule.DiemNN.ToString("G29");
+                                        <td>@valStr</td>
+                                    }
+                                    else
+                                    {
+                                        <td class="text-muted">-</td>
+                                    }
+                                }
+                            </tr>
+                        }
+                        <tr class="quydoi-matrix-row-result">
+                            <td>Điểm quy đổi</td>
+                            @foreach (var col in matrixCols)
+                            {
+                                <td>
+                                    <span class="@(col.DiemQuyDoi >= 10.0m ? "quydoi-score-green" : "quydoi-score-blue")">
+                                        @col.DiemQuyDoi.ToString("G29")
+                                    </span>
+                                </td>
+                            }
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row">
+    <!-- Form Thêm Quy Đổi -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-5">
+            <div class="card-header bg-white py-3 px-4">
+                <h5 class="mb-0 quydoi-header-title">Thêm mức quy đổi mới</h5>
+            </div>
+            <div class="card-body">
+                <form asp-controller="QuyDoiNN" asp-action="ThemDiemQuyDoi" method="post">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Bậc ngoại ngữ</label>
+                        <select name="bacNgoaiNguId" class="form-select" required>
+                            <option value="">-- Chọn Bậc --</option>
+                            @foreach (var b in dsBac)
+                            {
+                                <option value="@b.Id">@b.TenVietTat (@b.TenBac)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Loại ngoại ngữ</label>
+                        <select name="loaiNgoaiNguId" class="form-select" required>
+                            <option value="">-- Chọn Loại --</option>
+                            @foreach (var l in dsLoai)
+                            {
+                                <option value="@l.Id">@l.TenLoai</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label font-weight-500">Điểm từ</label>
+                            <input type="number" step="0.1" name="diemNN" class="form-control" placeholder="VD: 6.0" required min="0" max="999" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label font-weight-500">Điểm đến (tùy chọn)</label>
+                            <input type="number" step="0.1" name="diemNNDen" class="form-control" placeholder="VD: 6.5" min="0" max="999" />
+                        </div>
+                        <div class="form-text text-muted small">Nếu là 1 mức điểm đơn lẻ (như 5.0 hay 5.5), để trống ô "Điểm đến". Nếu là khoảng điểm (như 6 đến 6.5), điền Điểm đến = 6.5.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Điểm quy đổi môn Tiếng Anh</label>
+                        <input type="number" step="0.1" name="diemQuyDoi" class="form-control" placeholder="Ví dụ: 8.5" required min="0" max="10" />
+                        <div class="form-text text-muted small">Điểm quy đổi xét tuyển (thang 10).</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2 rounded-5">
+                        <i class="fa-solid fa-plus me-1"></i> Thêm mức quy đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách Quy Đổi (Sử dụng DataTable cuộn dọc) -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-5">
+            <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 quydoi-header-title">Danh sách mức quy đổi</h5>
+            </div>
+            <div class="card-body p-3">
+                <div class="table-responsive">
+                    <table id="tableQuyDoi" class="table table-hover align-middle mb-0 w-100">
+                        <thead class="table-light text-secondary font-weight-600 table-xs">
+                            <tr>
+                                <th class="ps-3 py-3">Bậc</th>
+                                <th class="py-3">Loại chứng chỉ</th>
+                                <th class="py-3">Điểm chứng chỉ</th>
+                                <th class="py-3">Điểm quy đổi</th>
+                                <th class="pe-3 py-3 text-end col-w-180">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var hienThiDiem = item.DiemNNDen.HasValue && item.DiemNNDen.Value > item.DiemNN
+                                    ? $"{item.DiemNN.ToString("G29")} - {item.DiemNNDen.Value.ToString("G29")}"
+                                    : item.DiemNN.ToString("G29");
+
+                                <tr>
+                                    <td class="ps-3">
+                                        <p class="quydoi-code-tag">
+                                            @item.BacNgoaiNgu?.TenVietTat-(@item.BacNgoaiNgu?.TenBac)
+                                        </p>
+                                    </td>
+                                    <td class="font-weight-600 text-main">
+                                        <i class="fa-solid fa-certificate text-warning me-1"></i> @item.LoaiNgoaiNgu?.TenLoai
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-primary">@hienThiDiem</span>
+                                    </td>
+                                    <td>
+                                        <span class="quydoi-val-tag">
+                                            @item.DiemQuyDoi.ToString("G29")
+                                        </span>
+                                    </td>
+                                    <td class="pe-3 text-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm me-2 rounded-5" 
+                                                data-bs-toggle="modal" data-bs-target="#editModal-@item.Id">
+                                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-5" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                            <i class="fa-solid fa-trash"></i> Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals Sửa & Xóa -->
+@foreach (var item in Model)
+{
+    var hienThiDiemModal = item.DiemNNDen.HasValue && item.DiemNNDen.Value > item.DiemNN
+        ? $"{item.DiemNN.ToString("G29")} - {item.DiemNNDen.Value.ToString("G29")}"
+        : item.DiemNN.ToString("G29");
+
+    <!-- Modal Sửa Quy Đổi -->
+    <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content quydoi-modal-content">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title font-weight-700 text-main">Chỉnh sửa quy tắc quy đổi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="QuyDoiNN" asp-action="SuaDiemQuyDoi" method="post">
+                    <div class="modal-body p-4 text-start">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <div class="mb-3">
+                            <label class="form-label font-weight-500">Bậc ngoại ngữ</label>
+                            <select name="bacNgoaiNguId" class="form-select" required>
+                                @foreach (var b in dsBac)
+                                {
+                                    <option value="@b.Id" selected="@(b.Id == item.BacNgoaiNguId ? "selected" : null)">
+                                        @b.TenVietTat (@b.TenBac)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-500">Loại ngoại ngữ</label>
+                            <select name="loaiNgoaiNguId" class="form-select" required>
+                                @foreach (var l in dsLoai)
+                                {
+                                    <option value="@l.Id" selected="@(l.Id == item.LoaiNgoaiNguId ? "selected" : null)">
+                                        @l.TenLoai
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label font-weight-500">Điểm từ</label>
+                                <input type="number" step="0.1" name="diemNN" value="@item.DiemNN.ToString("G29")" class="form-control" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label font-weight-500">Điểm đến (tùy chọn)</label>
+                                <input type="number" step="0.1" name="diemNNDen" value="@(item.DiemNNDen?.ToString("G29"))" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-500">Điểm quy đổi môn Tiếng Anh</label>
+                            <input type="number" step="0.1" name="diemQuyDoi" value="@item.DiemQuyDoi.ToString("G29")" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2 rounded-5">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xóa Quy Đổi -->
+    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content quydoi-modal-content">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title font-weight-700 text-danger">Xác nhận xóa quy tắc</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="QuyDoiNN" asp-action="XoaDiemQuyDoi" method="post">
+                    <div class="modal-body p-4 text-center">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
+                        <p class="mb-1 fw-semibold text-main fs-6">Bạn có chắc chắn muốn xóa quy tắc quy đổi này?</p>
+                        <div class="bg-light p-3 rounded-3 mt-3 font-monospace">
+                            Bậc: <strong>@item.BacNgoaiNgu?.TenVietTat</strong> | Loại: <strong>@item.LoaiNgoaiNgu?.TenLoai</strong> | Điểm NN: <strong>@hienThiDiemModal</strong> &rarr; Điểm QĐ: <strong>@item.DiemQuyDoi.ToString("G29")</strong>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2 rounded-5">Xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            if ($('#tableQuyDoi tbody tr').length > 0) {
+                $('#tableQuyDoi').DataTable({
+                    language: {
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json'
+                    },
+                    scrollY: '420px',
+                    scrollCollapse: true,
+                    paging: true,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tất cả"]],
+                    ordering: true,
+                    info: true
+                });
+            }
+        });
+    </script>
+}

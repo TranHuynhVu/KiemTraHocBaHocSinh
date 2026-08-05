@@ -16,6 +16,9 @@ namespace TuyenSinh.Data
         public DbSet<ToHopMon> ToHopMons { get; set; } = null!;
         public DbSet<Nganh> Nganhs { get; set; } = null!;
         public DbSet<ToHopNganh> ToHopNganhs { get; set; } = null!;
+        public DbSet<BacNgoaiNgu> BacNgoaiNgus { get; set; } = null!;
+        public DbSet<LoaiNgoaiNgu> LoaiNgoaiNgus { get; set; } = null!;
+        public DbSet<QuyDoiNN> QuyDoiNNs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,6 +43,25 @@ namespace TuyenSinh.Data
                     .WithMany()
                     .HasForeignKey(d => d.ToHopId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure QuyDoiNN
+            builder.Entity<QuyDoiNN>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.DiemNN).HasColumnType("decimal(18, 2)");
+                entity.Property(e => e.DiemNNDen).HasColumnType("decimal(18, 2)");
+                entity.Property(e => e.DiemQuyDoi).HasColumnType("decimal(18, 2)");
+
+                entity.HasOne(d => d.BacNgoaiNgu)
+                    .WithMany()
+                    .HasForeignKey(d => d.BacNgoaiNguId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.LoaiNgoaiNgu)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoaiNgoaiNguId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

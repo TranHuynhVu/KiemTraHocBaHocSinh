@@ -536,6 +536,14 @@ table.dataTable tbody td {
     font-weight: 600;
     font-size: 0.82rem;
     border: 1px solid rgba(0, 122, 255, 0.15);
+    max-width: 100%;
+}
+
+.text-truncate-filename {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 .doichieu-stat-value {
@@ -796,4 +804,88 @@ table.dataTable tbody td {
     font-size: 0.85rem;
     margin-top: 12px;
     border: 1px solid rgba(0, 122, 255, 0.15);
+    max-width: 100%;
 }
+
+/* === QuyDoiNN Management Custom Classes === */
+.quydoi-header-title {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.quydoi-count-tag {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+
+.quydoi-code-tag {
+    background-color: #f2f2f7;
+    color: #1c1c1e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.quydoi-val-tag {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.quydoi-score-blue {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    padding: 2px 10px;
+    border-radius: 4px;
+}
+
+.quydoi-score-green {
+    background-color: #34c759;
+    color: #ffffff;
+    padding: 2px 10px;
+    border-radius: 4px;
+}
+
+.quydoi-matrix-table {
+    font-size: 0.85rem;
+    border-collapse: collapse;
+}
+
+.quydoi-matrix-head {
+    background-color: #1d1d1f;
+    color: #ffffff;
+}
+
+.quydoi-matrix-row-head {
+    background-color: #fafafa;
+    font-weight: 700;
+}
+
+.quydoi-matrix-row-result {
+    background-color: var(--primary-light);
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.quydoi-modal-content {
+    border-radius: 5px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.col-w-80 { width: 80px; }
+.col-w-180 { width: 180px; }
+.col-w-200 { width: 200px; }
+.col-w-12-pc { width: 12%; }

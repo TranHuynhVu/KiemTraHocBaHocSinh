@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TuyenSinh.Data;
 
@@ -11,9 +12,11 @@ using TuyenSinh.Data;
 namespace TuyenSinh.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803083300_create_quydoinn")]
+    partial class create_quydoinn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -347,9 +350,6 @@ namespace TuyenSinh.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("DiemNN")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("DiemNNDen")
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("DiemQuyDoi")
