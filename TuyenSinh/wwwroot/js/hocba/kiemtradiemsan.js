@@ -5,10 +5,6 @@ $(document).ready(function () {
     const fileNameDisplay = $('#fileDiemSanName');
     const btnSubmit = $('#btnThucHienKiemTra');
 
-    if (typeof errorMessage !== 'undefined' && errorMessage) {
-        Swal.fire('Thông báo', errorMessage, 'error');
-    }
-
     // Initialize Select2 for quick searching
     if ($.fn.select2) {
         $('#selectMaNganh').select2({

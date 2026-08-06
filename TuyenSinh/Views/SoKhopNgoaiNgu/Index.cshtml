@@ -21,9 +21,14 @@
             <div class="row g-4">
                 <!-- File 1: Nguyện vọng -->
                 <div class="col-md-4">
-                    <label class="form-label doichieu-zone-label">
-                        <i class="fa-solid fa-file-excel text-primary me-1"></i>1. File Nguyện vọng thí sinh
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label doichieu-zone-label mb-0">
+                            <i class="fa-solid fa-file-excel text-primary me-1"></i>1. File Nguyện vọng thí sinh
+                        </label>
+                        <a href="/admin/template/download/Mau_NguyenVong.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-primary fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Mẫu NV
+                        </a>
+                    </div>
                     <div class="doichieu-drop-zone" id="dropZoneNV">
                         <div class="doichieu-upload-icon">
                             <i class="fa-solid fa-list-check"></i>
@@ -41,9 +46,14 @@
 
                 <!-- File 2: Danh sách thí sinh -->
                 <div class="col-md-4">
-                    <label class="form-label doichieu-zone-label">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i>2. File Danh sách thí sinh (DSTS)
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label doichieu-zone-label mb-0">
+                            <i class="fa-solid fa-file-excel text-success me-1"></i>2. File Danh sách thí sinh
+                        </label>
+                        <a href="/admin/template/download/Mau_DanhSachThiSinh.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-success fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Mẫu DSTS
+                        </a>
+                    </div>
                     <div class="doichieu-drop-zone" id="dropZoneDSTS">
                         <div class="doichieu-upload-icon">
                             <i class="fa-solid fa-users"></i>
@@ -61,9 +71,14 @@
 
                 <!-- File 3: Hợp lệ ngoại ngữ -->
                 <div class="col-md-4">
-                    <label class="form-label doichieu-zone-label">
-                        <i class="fa-solid fa-file-excel text-warning me-1"></i>3. File Hợp lệ Ngoại ngữ
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label doichieu-zone-label mb-0">
+                            <i class="fa-solid fa-file-excel text-warning me-1"></i>3. File Hợp lệ Ngoại ngữ
+                        </label>
+                        <a href="/admin/template/download/Mau_HopLeNgoaiNgu.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-warning fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Mẫu NN
+                        </a>
+                    </div>
                     <div class="doichieu-drop-zone" id="dropZoneNN">
                         <div class="doichieu-upload-icon">
                             <i class="fa-solid fa-award"></i>
@@ -92,8 +107,6 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const errorMessage = '@Html.Raw(TempData["Error"] ?? "")';
-
         $(document).ready(function () {
             setupDropZone('dropZoneNV', 'fileNV', 'fileNVInfo', 'fileNVName');
             setupDropZone('dropZoneDSTS', 'fileDSTS', 'fileDSTSInfo', 'fileDSTSName');

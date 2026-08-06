@@ -15,11 +15,6 @@ $(document).ready(function () {
             }
         });
     });
-
-    // Alert error message if passed from server-side
-    if (typeof errorMessage !== 'undefined' && errorMessage) {
-        Swal.fire('Lỗi', errorMessage, 'error');
-    }
 });
 
 function setupDropZone(zoneId, inputId, infoId, nameId) {

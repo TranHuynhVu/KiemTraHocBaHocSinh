@@ -1,0 +1,56 @@
+@* Shared Notification Partial View for SweetAlert2 & Alert Messages *@
+
+@if (TempData["Success"] != null || TempData["Error"] != null || TempData["ErrorMessage"] != null || TempData["Warning"] != null || TempData["Info"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof Swal !== 'undefined') {
+                @if (TempData["Success"] != null)
+                {
+                    <text>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công',
+                        text: @Json.Serialize(TempData["Success"]?.ToString()),
+                        confirmButtonColor: '#007aff'
+                    });
+                    </text>
+                }
+                @if (TempData["Error"] != null || TempData["ErrorMessage"] != null)
+                {
+                    var msg = TempData["Error"] ?? TempData["ErrorMessage"];
+                    <text>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: @Json.Serialize(msg?.ToString()),
+                        confirmButtonColor: '#ff3b30'
+                    });
+                    </text>
+                }
+                @if (TempData["Warning"] != null)
+                {
+                    <text>
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cảnh báo',
+                        text: @Json.Serialize(TempData["Warning"]?.ToString()),
+                        confirmButtonColor: '#ff9500'
+                    });
+                    </text>
+                }
+                @if (TempData["Info"] != null)
+                {
+                    <text>
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Thông báo',
+                        text: @Json.Serialize(TempData["Info"]?.ToString()),
+                        confirmButtonColor: '#5856d6'
+                    });
+                    </text>
+                }
+            }
+        });
+    </script>
+}

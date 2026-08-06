@@ -21,9 +21,14 @@
             <div class="row g-4">
                 <!-- File 1: Học bạ -->
                 <div class="col-md-6">
-                    <label class="form-label doichieu-zone-label">
-                        <i class="fa-solid fa-file-excel text-success me-1"></i>File Học bạ thí sinh
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label doichieu-zone-label mb-0">
+                            <i class="fa-solid fa-file-excel text-success me-1"></i>File Học bạ thí sinh
+                        </label>
+                        <a href="/admin/template/download/Mau_HocBa_THPT.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-success fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Tải mẫu Học bạ
+                        </a>
+                    </div>
                     <div class="doichieu-drop-zone" id="dropZoneHocBa">
                         <div class="doichieu-upload-icon">
                             <i class="fa-solid fa-graduation-cap"></i>
@@ -41,9 +46,14 @@
                 </div>
                 <!-- File 2: Nguyện vọng -->
                 <div class="col-md-6">
-                    <label class="form-label doichieu-zone-label">
-                        <i class="fa-solid fa-file-excel text-primary me-1"></i>File Nguyện vọng thí sinh
-                    </label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label doichieu-zone-label mb-0">
+                            <i class="fa-solid fa-file-excel text-primary me-1"></i>File Nguyện vọng thí sinh
+                        </label>
+                        <a href="/admin/template/download/Mau_NguyenVong.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-primary fw-semibold">
+                            <i class="fa-solid fa-download me-1"></i>Tải mẫu Nguyện vọng
+                        </a>
+                    </div>
                     <div class="doichieu-drop-zone" id="dropZoneNguyenVong">
                         <div class="doichieu-upload-icon">
                             <i class="fa-solid fa-list-check"></i>
@@ -71,8 +81,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        const errorMessage = '@Html.Raw(TempData["Error"] ?? "")';
-    </script>
     <script src="~/js/hocba/doichieu.js" asp-append-version="true"></script>
 }
