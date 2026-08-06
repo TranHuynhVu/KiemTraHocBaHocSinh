@@ -111,7 +111,8 @@
                         <th class="text-center text-nowrap" style="width: 100px;">Ngày sinh</th>
                         <th class="text-center text-nowrap" style="width: 140px;">Số ĐDCN (CCCD)</th>
                         <th class="text-nowrap" style="min-width: 150px;">Chứng chỉ ngoại ngữ</th>
-                        <th class="text-center text-nowrap" style="width: 90px;">Điểm / Bậc CC</th>
+                        <th class="text-center text-nowrap" style="width: 110px;">Điểm / Bậc CC</th>
+                        <th class="text-center text-nowrap" style="width: 110px;">Điểm quy đổi</th>
                         <th class="text-nowrap" style="min-width: 220px;">Mã xét tuyển</th>
                     </tr>
                 </thead>
@@ -189,9 +190,14 @@
                         render: function (data) { return escapeHtml(data) || '-'; }
                     },
                     {
-                        data: 'DiemBacChungChi',
-                        className: 'text-center fw-bold text-success text-nowrap',
-                        render: function (data) { return escapeHtml(data) || '-'; }
+                        data: 'DiemNN',
+                        className: 'text-center fw-bold text-primary text-nowrap',
+                        render: function (data) { return (data !== null && data !== undefined && data !== 0) ? data : '-'; }
+                    },
+                    {
+                        data: 'DiemQuyDoi',
+                        className: 'text-center fw-bold text-primary text-nowrap',
+                        render: function (data) { return (data !== null && data !== undefined && data !== 0) ? `<span class="fw-bold px-2 py-1 fs-6">${data}</span>` : '<span class="text-muted small">-</span>'; }
                     },
                     {
                         data: 'MaXetTuyen',

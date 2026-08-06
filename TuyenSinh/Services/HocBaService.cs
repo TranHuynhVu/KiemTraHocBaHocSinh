@@ -1162,9 +1162,6 @@ namespace TuyenSinh.Services
                 using (var range = worksheet.Cells[1, 1, 1, 6])
                 {
                     range.Style.Font.Bold = true;
-                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                    range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
                 }
 
                 // Data
@@ -1195,9 +1192,6 @@ namespace TuyenSinh.Services
                 using (var range2 = ws2.Cells[1, 1, 1, headers2.Length])
                 {
                     range2.Style.Font.Bold = true;
-                    range2.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                    range2.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                    range2.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
                 }
 
                 var dsThiSinhUnique = result.DanhSachThieuDiem
@@ -1250,9 +1244,6 @@ namespace TuyenSinh.Services
             using (var range = ws.Cells[1, 1, 1, headers.Length])
             {
                 range.Style.Font.Bold = true;
-                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
             }
 
             int row = 2;
@@ -1284,9 +1275,6 @@ namespace TuyenSinh.Services
             using (var range2 = ws2.Cells[1, 1, 1, headers2.Length])
             {
                 range2.Style.Font.Bold = true;
-                range2.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                range2.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                range2.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
             }
 
             var dsThiSinhUnique = result.DanhSachThieuDiem
@@ -1337,9 +1325,6 @@ namespace TuyenSinh.Services
             using (var range = ws.Cells[1, 1, 1, headers.Length])
             {
                 range.Style.Font.Bold = true;
-                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(229, 241, 255));
-                range.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
             }
 
             int row = 2;

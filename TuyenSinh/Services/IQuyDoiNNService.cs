@@ -23,8 +23,12 @@ namespace TuyenSinh.Services
         // Quản lý Điểm Quy Đổi Ngoại Ngữ
         Task<List<QuyDoiNN>> LayDanhSachQuyDoiAsync();
         Task<QuyDoiNN?> LayQuyDoiTheoIdAsync(int id);
-        Task<(bool Success, string Message)> ThemQuyDoiAsync(int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal? diemNNDen, decimal diemQuyDoi);
-        Task<(bool Success, string Message)> SuaQuyDoiAsync(int id, int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal? diemNNDen, decimal diemQuyDoi);
+        Task<(bool Success, string Message)> ThemQuyDoiAsync(int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal diemQuyDoi);
+        Task<(bool Success, string Message)> SuaQuyDoiAsync(int id, int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal diemQuyDoi);
         Task<(bool Success, string Message)> XoaQuyDoiAsync(int id);
+
+        // Tra cứu & Lấy điểm quy đổi ngoại ngữ
+        Task<Dictionary<string, List<QuyDoiNN>>> DanhSachDiemQuyDoiAsync();
+        decimal? LayDiemQuyDoiNNTheoTenLoai(Dictionary<string, List<QuyDoiNN>> danhSachQuyDoi, string tenLoai, decimal diemNN);
     }
 }

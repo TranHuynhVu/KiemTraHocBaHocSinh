@@ -4,11 +4,10 @@
     ViewData["PageTitle"] = "Quản lý Quy đổi Ngoại ngữ";
     Layout = "_AdminLayout";
 
-    var dsBac = ViewBag.DanhSachBac as List<TuyenSinh.Models.BacNgoaiNgu> ?? new List<TuyenSinh.Models.BacNgoaiNgu>();
-    var dsLoai = ViewBag.DanhSachLoai as List<TuyenSinh.Models.LoaiNgoaiNgu> ?? new List<TuyenSinh.Models.LoaiNgoaiNgu>();
+    var dsBac = ViewBag.DanhSachBac as List<BacNgoaiNgu> ?? new List<BacNgoaiNgu>();
+    var dsLoai = ViewBag.DanhSachLoai as List<LoaiNgoaiNgu> ?? new List<LoaiNgoaiNgu>();
 
-    // Thống kê ma trận động từ CSDL
-    var matrixCols = new List<(TuyenSinh.Models.BacNgoaiNgu Bac, decimal DiemQuyDoi, Dictionary<int, TuyenSinh.Models.QuyDoiNN> RulesByLoai)>();
+    var matrixCols = new List<(BacNgoaiNgu Bac, decimal DiemQuyDoi, Dictionary<int, List<decimal>> ScoresByLoai)>();
 
     foreach (var bac in dsBac)
     {
@@ -18,20 +17,11 @@
         var groupedByScore = bacRules.GroupBy(r => r.DiemQuyDoi).OrderBy(g => g.Key);
         foreach (var group in groupedByScore)
         {
-            int maxSlots = group.GroupBy(r => r.LoaiNgoaiNguId).Max(g => g.Count());
-            for (int i = 0; i < maxSlots; i++)
-            {
-                var slotRules = new Dictionary<int, TuyenSinh.Models.QuyDoiNN>();
-                foreach (var loaiGroup in group.GroupBy(r => r.LoaiNgoaiNguId))
-                {
-                    var ruleList = loaiGroup.OrderBy(r => r.DiemNN).ToList();
-                    if (i < ruleList.Count)
-                    {
-                        slotRules[loaiGroup.Key] = ruleList[i];
-                    }
-                }
-                matrixCols.Add((bac, group.Key, slotRules));
-            }
+            var scoresByLoai = group
+                .GroupBy(r => r.LoaiNgoaiNguId)
+                .ToDictionary(g => g.Key, g => g.Select(r => r.DiemNN).OrderBy(s => s).ToList());
+
+            matrixCols.Add((bac, group.Key, scoresByLoai));
         }
     }
 }
@@ -54,7 +44,7 @@
     </div>
 </div>
 
-<!-- Card Bảng Phụ Lục Quy Đổi Trực Quan (Sinh Động Từ Dữ Liệu CSDL) -->
+<!-- Card Bảng Phụ Lục Quy Đổi Trực Quan (Gom nhóm điểm cùng Bậc & Điểm quy đổi) -->
 @if (matrixCols.Any())
 {
     <div class="card border-0 shadow-sm mb-4 rounded-5">
@@ -83,11 +73,11 @@
                                 <td class="quydoi-matrix-row-head">@loai.TenLoai</td>
                                 @foreach (var col in matrixCols)
                                 {
-                                    if (col.RulesByLoai.TryGetValue(loai.Id, out var rule))
+                                    if (col.ScoresByLoai.TryGetValue(loai.Id, out var scores) && scores.Any())
                                     {
-                                        var valStr = rule.DiemNNDen.HasValue && rule.DiemNNDen.Value > rule.DiemNN
-                                            ? $"{rule.DiemNN.ToString("G29")} - {rule.DiemNNDen.Value.ToString("G29")}"
-                                            : rule.DiemNN.ToString("G29");
+                                        string valStr = scores.Count == 1
+                                            ? scores[0].ToString("G29")
+                                            : $"{scores.Min().ToString("G29")} - {scores.Max().ToString("G29")}";
                                         <td>@valStr</td>
                                     }
                                     else
@@ -144,16 +134,10 @@
                             }
                         </select>
                     </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label class="form-label font-weight-500">Điểm từ</label>
-                            <input type="number" step="0.1" name="diemNN" class="form-control" placeholder="VD: 6.0" required min="0" max="999" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label font-weight-500">Điểm đến (tùy chọn)</label>
-                            <input type="number" step="0.1" name="diemNNDen" class="form-control" placeholder="VD: 6.5" min="0" max="999" />
-                        </div>
-                        <div class="form-text text-muted small">Nếu là 1 mức điểm đơn lẻ (như 5.0 hay 5.5), để trống ô "Điểm đến". Nếu là khoảng điểm (như 6 đến 6.5), điền Điểm đến = 6.5.</div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-500">Mốc điểm chứng chỉ tối thiểu</label>
+                        <input type="number" step="0.1" name="diemNN" class="form-control" placeholder="Ví dụ: 6.0" required min="0" max="999" />
+                        <div class="form-text text-muted small">Điểm tối thiểu để đạt mức quy đổi (VD: nhập 6.0 sẽ đại diện cho khoảng 6 - 6.5).</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label font-weight-500">Điểm quy đổi môn Tiếng Anh</label>
@@ -181,7 +165,7 @@
                             <tr>
                                 <th class="ps-3 py-3">Bậc</th>
                                 <th class="py-3">Loại chứng chỉ</th>
-                                <th class="py-3">Điểm chứng chỉ</th>
+                                <th class="py-3">Điểm mốc tối thiểu</th>
                                 <th class="py-3">Điểm quy đổi</th>
                                 <th class="pe-3 py-3 text-end col-w-180">Thao tác</th>
                             </tr>
@@ -189,21 +173,18 @@
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                var hienThiDiem = item.DiemNNDen.HasValue && item.DiemNNDen.Value > item.DiemNN
-                                    ? $"{item.DiemNN.ToString("G29")} - {item.DiemNNDen.Value.ToString("G29")}"
-                                    : item.DiemNN.ToString("G29");
-
                                 <tr>
                                     <td class="ps-3">
-                                        <p class="quydoi-code-tag">
-                                            @item.BacNgoaiNgu?.TenVietTat-(@item.BacNgoaiNgu?.TenBac)
-                                        </p>
+                                        <span class="quydoi-code-tag">
+                                            @item.BacNgoaiNgu?.TenVietTat
+                                        </span>
+                                        <span class="small text-muted ms-1">(@item.BacNgoaiNgu?.TenBac)</span>
                                     </td>
                                     <td class="font-weight-600 text-main">
                                         <i class="fa-solid fa-certificate text-warning me-1"></i> @item.LoaiNgoaiNgu?.TenLoai
                                     </td>
                                     <td>
-                                        <span class="fw-semibold text-primary">@hienThiDiem</span>
+                                        <span class="fw-semibold text-primary">@item.DiemNN.ToString("G29")</span>
                                     </td>
                                     <td>
                                         <span class="quydoi-val-tag">
@@ -233,10 +214,6 @@
 <!-- Modals Sửa & Xóa -->
 @foreach (var item in Model)
 {
-    var hienThiDiemModal = item.DiemNNDen.HasValue && item.DiemNNDen.Value > item.DiemNN
-        ? $"{item.DiemNN.ToString("G29")} - {item.DiemNNDen.Value.ToString("G29")}"
-        : item.DiemNN.ToString("G29");
-
     <!-- Modal Sửa Quy Đổi -->
     <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -270,15 +247,9 @@
                                 }
                             </select>
                         </div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <label class="form-label font-weight-500">Điểm từ</label>
-                                <input type="number" step="0.1" name="diemNN" value="@item.DiemNN.ToString("G29")" class="form-control" required />
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label font-weight-500">Điểm đến (tùy chọn)</label>
-                                <input type="number" step="0.1" name="diemNNDen" value="@(item.DiemNNDen?.ToString("G29"))" class="form-control" />
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-500">Mốc điểm tối thiểu</label>
+                            <input type="number" step="0.1" name="diemNN" value="@item.DiemNN.ToString("G29")" class="form-control" required />
                         </div>
                         <div class="mb-3">
                             <label class="form-label font-weight-500">Điểm quy đổi môn Tiếng Anh</label>
@@ -308,7 +279,7 @@
                         <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
                         <p class="mb-1 fw-semibold text-main fs-6">Bạn có chắc chắn muốn xóa quy tắc quy đổi này?</p>
                         <div class="bg-light p-3 rounded-3 mt-3 font-monospace">
-                            Bậc: <strong>@item.BacNgoaiNgu?.TenVietTat</strong> | Loại: <strong>@item.LoaiNgoaiNgu?.TenLoai</strong> | Điểm NN: <strong>@hienThiDiemModal</strong> &rarr; Điểm QĐ: <strong>@item.DiemQuyDoi.ToString("G29")</strong>
+                            Bậc: <strong>@item.BacNgoaiNgu?.TenVietTat</strong> | Loại: <strong>@item.LoaiNgoaiNgu?.TenLoai</strong> | Điểm NN: <strong>@item.DiemNN.ToString("G29")</strong> &rarr; Điểm QĐ: <strong>@item.DiemQuyDoi.ToString("G29")</strong>
                         </div>
                     </div>
                     <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">

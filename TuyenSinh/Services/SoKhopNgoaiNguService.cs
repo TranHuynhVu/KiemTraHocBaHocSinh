@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Hangfire;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using TuyenSinh.Data;
 using TuyenSinh.ViewModels;
 
 namespace TuyenSinh.Services
@@ -17,11 +11,15 @@ namespace TuyenSinh.Services
     {
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly ApplicationDbContext _context;
+        private readonly IQuyDoiNNService _quyDoiNNService;
 
-        public SoKhopNgoaiNguService(IWebHostEnvironment hostingEnvironment, IBackgroundJobClient backgroundJobClient)
+        public SoKhopNgoaiNguService(IWebHostEnvironment hostingEnvironment, IBackgroundJobClient backgroundJobClient, ApplicationDbContext context, IQuyDoiNNService quyDoiNNService)
         {
             _hostingEnvironment = hostingEnvironment;
             _backgroundJobClient = backgroundJobClient;
+            _context = context;
+            _quyDoiNNService = quyDoiNNService;
         }
 
         public async Task<string> LuuFileTamThoiAsync(IFormFile file)
@@ -93,7 +91,8 @@ namespace TuyenSinh.Services
             // Read File 3: Hợp Lệ Ngoại Ngữ
             var (listNN, mapNN, totalCountNN) = ReadHopLeNnFile(pathNN);
 
-            // Perform Join on DDCN strictly starting from DSHopLeNN candidates
+            var listLoaiNN = await _quyDoiNNService.DanhSachDiemQuyDoiAsync();
+
             var resultItems = new List<KetQuaSoKhopNgoaiNguItem>();
 
             foreach (var nnItem in listNN)
@@ -108,10 +107,11 @@ namespace TuyenSinh.Services
                 string hoTen = dstsInfo.HoTen ?? string.Empty;
                 string ngaySinh = dstsInfo.NgaySinh ?? string.Empty;
                 string chungChi = nnItem.ChungChi ?? string.Empty;
-                string diemBac = nnItem.DiemBac ?? string.Empty;
+                decimal diemBac = nnItem.DiemBac;
                 string maXetTuyen = mxtList != null && mxtList.Any()
                     ? string.Join("; ", mxtList.Distinct())
                     : string.Empty;
+                decimal? diemQuyDoi = _quyDoiNNService.LayDiemQuyDoiNNTheoTenLoai(listLoaiNN, chungChi, diemBac);
 
                 resultItems.Add(new KetQuaSoKhopNgoaiNguItem
                 {
@@ -120,9 +120,9 @@ namespace TuyenSinh.Services
                     NgaySinh = ngaySinh,
                     Ddcn = ddcn,
                     ChungChiNgoaiNgu = chungChi,
-                    DiemBacChungChi = diemBac,
+                    DiemNN = diemBac,
                     MaXetTuyen = maXetTuyen,
-                    MatchStatus = "Khớp ĐDCN"
+                    DiemQuyDoi = diemQuyDoi
                 });
             }
 
@@ -166,15 +166,12 @@ namespace TuyenSinh.Services
             var sheet = package.Workbook.Worksheets.Add("KetQua_SoKhop_3File");
 
             // Header styling
-            string[] headers = new[] { "STT", "Số báo danh", "Họ Tên", "Ngày sinh", "ĐDCN", "Chứng chỉ ngoại ngữ", "Điểm / Bậc chứng chỉ", "Mã xét tuyển" };
+            string[] headers = new[] { "STT", "Số báo danh", "Họ Tên", "Ngày sinh", "ĐDCN", "Chứng chỉ ngoại ngữ", "Điểm / Bậc chứng chỉ", "Điểm quy đổi môn TA", "Mã xét tuyển" };
             for (int col = 0; col < headers.Length; col++)
             {
                 var cell = sheet.Cells[1, col + 1];
                 cell.Value = headers[col];
                 cell.Style.Font.Bold = true;
-                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 122, 255));
-                cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
                 cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             }
 
@@ -187,14 +184,16 @@ namespace TuyenSinh.Services
                 sheet.Cells[row, 4].Value = item.NgaySinh;
                 sheet.Cells[row, 5].Value = item.Ddcn;
                 sheet.Cells[row, 6].Value = item.ChungChiNgoaiNgu;
-                sheet.Cells[row, 7].Value = item.DiemBacChungChi;
-                sheet.Cells[row, 8].Value = item.MaXetTuyen;
+                sheet.Cells[row, 7].Value = item.DiemNN;
+                sheet.Cells[row, 8].Value = item.DiemQuyDoi.HasValue ? item.DiemQuyDoi.Value : "-";
+                sheet.Cells[row, 9].Value = item.MaXetTuyen;
 
                 sheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 sheet.Cells[row, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 sheet.Cells[row, 4].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 sheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 sheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                sheet.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 row++;
             }
@@ -203,8 +202,6 @@ namespace TuyenSinh.Services
 
             return (true, "Thành công", package.GetAsByteArray());
         }
-
-        #region Private Parsing Helpers
 
         private (Dictionary<string, List<string>> MapNV, int TotalCount) ReadNguyenVongFile(string filePath)
         {
@@ -284,10 +281,10 @@ namespace TuyenSinh.Services
             return (result, totalRows);
         }
 
-        private (List<(string Ddcn, string? Sbd, string? ChungChi, string? DiemBac)> ListNN, Dictionary<string, (string? Sbd, string? ChungChi, string? DiemBac)> MapNN, int TotalCount) ReadHopLeNnFile(string filePath)
+        private (List<(string Ddcn, string Sbd, string ChungChi, decimal DiemBac)> ListNN, Dictionary<string, (string Sbd, string ChungChi, decimal DiemBac)> MapNN, int TotalCount) ReadHopLeNnFile(string filePath)
         {
-            var list = new List<(string Ddcn, string? Sbd, string? ChungChi, string? DiemBac)>();
-            var map = new Dictionary<string, (string? Sbd, string? ChungChi, string? DiemBac)>(StringComparer.OrdinalIgnoreCase);
+            var list = new List<(string Ddcn, string? Sbd, string ChungChi, decimal DiemBac)>();
+            var map = new Dictionary<string, (string? Sbd, string ChungChi, decimal DiemBac)>(StringComparer.OrdinalIgnoreCase);
 
             if (!File.Exists(filePath)) return (list, map, 0);
 
@@ -297,8 +294,6 @@ namespace TuyenSinh.Services
 
             int endRow = sheet.Dimension.End.Row;
 
-            // Fixed column positions: Header at Row 1, Data starts at Row 2
-            // Column 2: SBD, Column 3: ĐDCN, Column 4: Chứng chỉ ngoại ngữ, Column 5: Điểm / Bậc CC
             int colSbd = 2, colDdcn = 3, colCc = 4, colDiem = 5;
 
             for (int r = 2; r <= endRow; r++)
@@ -306,7 +301,8 @@ namespace TuyenSinh.Services
                 var ddcn = ParseString(sheet.Cells[r, colDdcn].Value);
                 var sbd = ParseString(sheet.Cells[r, colSbd].Value);
                 var cc = ParseString(sheet.Cells[r, colCc].Value);
-                var diem = ParseString(sheet.Cells[r, colDiem].Value);
+                var diemVal = sheet.Cells[r, colDiem].Value;
+                var diem = ParseDiemBac(diemVal);
 
                 if (string.IsNullOrWhiteSpace(ddcn) && string.IsNullOrWhiteSpace(sbd)) continue;
 
@@ -320,13 +316,35 @@ namespace TuyenSinh.Services
             return (list, map, list.Count);
         }
 
-        private static string? ParseString(object? val)
+        private decimal ParseDiemBac(object? val)
+        {
+            if (val == null) return 0m;
+            var str = val.ToString()?.Trim();
+            if (string.IsNullOrEmpty(str)) return 0m;
+
+            // Nếu chứa dấu / (ví dụ: "5/B1", "5.5/B2"), lấy phần điểm số trước dấu /
+            if (str.Contains('/'))
+            {
+                var parts = str.Split('/');
+                str = parts[0].Trim();
+            }
+
+            // Thay dấu phẩy thành dấu chấm nếu có (ví dụ "5,5" -> "5.5")
+            str = str.Replace(',', '.');
+
+            if (decimal.TryParse(str, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal res))
+            {
+                return res;
+            }
+
+            return 0m;
+        }
+
+        private string? ParseString(object? val)
         {
             if (val == null) return null;
             var str = val.ToString()?.Trim();
             return string.IsNullOrEmpty(str) ? null : str;
         }
-
-        #endregion
     }
 }

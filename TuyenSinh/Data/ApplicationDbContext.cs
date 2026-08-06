@@ -50,7 +50,6 @@ namespace TuyenSinh.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.DiemNN).HasColumnType("decimal(18, 2)");
-                entity.Property(e => e.DiemNNDen).HasColumnType("decimal(18, 2)");
                 entity.Property(e => e.DiemQuyDoi).HasColumnType("decimal(18, 2)");
 
                 entity.HasOne(d => d.BacNgoaiNgu)

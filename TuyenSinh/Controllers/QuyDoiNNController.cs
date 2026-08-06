@@ -28,9 +28,9 @@ namespace TuyenSinh.Controllers
         }
 
         [HttpPost("diem-quy-doi/them")]
-        public async Task<IActionResult> ThemDiemQuyDoi(int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal? diemNNDen, decimal diemQuyDoi)
+        public async Task<IActionResult> ThemDiemQuyDoi(int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal diemQuyDoi)
         {
-            var result = await _quyDoiNNService.ThemQuyDoiAsync(bacNgoaiNguId, loaiNgoaiNguId, diemNN, diemNNDen, diemQuyDoi);
+            var result = await _quyDoiNNService.ThemQuyDoiAsync(bacNgoaiNguId, loaiNgoaiNguId, diemNN, diemQuyDoi);
             if (result.Success)
             {
                 TempData["Success"] = result.Message;
@@ -43,9 +43,9 @@ namespace TuyenSinh.Controllers
         }
 
         [HttpPost("diem-quy-doi/sua")]
-        public async Task<IActionResult> SuaDiemQuyDoi(int id, int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal? diemNNDen, decimal diemQuyDoi)
+        public async Task<IActionResult> SuaDiemQuyDoi(int id, int bacNgoaiNguId, int loaiNgoaiNguId, decimal diemNN, decimal diemQuyDoi)
         {
-            var result = await _quyDoiNNService.SuaQuyDoiAsync(id, bacNgoaiNguId, loaiNgoaiNguId, diemNN, diemNNDen, diemQuyDoi);
+            var result = await _quyDoiNNService.SuaQuyDoiAsync(id, bacNgoaiNguId, loaiNgoaiNguId, diemNN, diemQuyDoi);
             if (result.Success)
             {
                 TempData["Success"] = result.Message;

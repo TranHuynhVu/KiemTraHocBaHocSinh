@@ -11,9 +11,9 @@ namespace TuyenSinh.ViewModels
         public string NgaySinh { get; set; } = string.Empty;
         public string Ddcn { get; set; } = string.Empty;
         public string ChungChiNgoaiNgu { get; set; } = string.Empty;
-        public string DiemBacChungChi { get; set; } = string.Empty;
+        public decimal DiemNN { get; set; }
         public string MaXetTuyen { get; set; } = string.Empty;
-        public string MatchStatus { get; set; } = "Khớp ĐDCN";
+        public decimal? DiemQuyDoi { get; set; }
     }
 
     public class SoKhopNgoaiNguThongKeViewModel
