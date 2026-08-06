@@ -92,7 +92,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const errorMessage = '@Html.Raw(TempData["ErrorMessage"] ?? "")';
+        const errorMessage = '@Html.Raw(TempData["Error"] ?? "")';
 
         $(document).ready(function () {
             setupDropZone('dropZoneNV', 'fileNV', 'fileNVInfo', 'fileNVName');

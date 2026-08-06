@@ -13,10 +13,12 @@ namespace TuyenSinh.Controllers
     public class SoKhopNgoaiNguController : Controller
     {
         private readonly ISoKhopNgoaiNguService _soKhopNgoaiNguService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public SoKhopNgoaiNguController(ISoKhopNgoaiNguService soKhopNgoaiNguService)
+        public SoKhopNgoaiNguController(ISoKhopNgoaiNguService soKhopNgoaiNguService, IFileStorageService fileStorageService)
         {
             _soKhopNgoaiNguService = soKhopNgoaiNguService;
+            _fileStorageService = fileStorageService;
         }
 
         [HttpGet("")]
@@ -30,25 +32,25 @@ namespace TuyenSinh.Controllers
         {
             if (fileNV == null || fileNV.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn File Nguyện vọng thí sinh.";
+                TempData["Error"] = "Vui lòng chọn File Nguyện vọng thí sinh.";
                 return RedirectToAction("Index");
             }
             if (fileDSTS == null || fileDSTS.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn File Danh sách thí sinh.";
+                TempData["Error"] = "Vui lòng chọn File Danh sách thí sinh.";
                 return RedirectToAction("Index");
             }
             if (fileNN == null || fileNN.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn File Hợp lệ Ngoại ngữ.";
+                TempData["Error"] = "Vui lòng chọn File Hợp lệ Ngoại ngữ.";
                 return RedirectToAction("Index");
             }
 
             try
             {
-                var nvFileId = await _soKhopNgoaiNguService.LuuFileTamThoiAsync(fileNV);
-                var dstsFileId = await _soKhopNgoaiNguService.LuuFileTamThoiAsync(fileDSTS);
-                var nnFileId = await _soKhopNgoaiNguService.LuuFileTamThoiAsync(fileNN);
+                var nvFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNV);
+                var dstsFileId = await _fileStorageService.LuuFileTamThoiAsync(fileDSTS);
+                var nnFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNN);
 
                 ViewBag.NvFileId = nvFileId;
                 ViewBag.DstsFileId = dstsFileId;
@@ -58,7 +60,7 @@ namespace TuyenSinh.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi nạp các tệp Excel: " + ex.Message;
+                TempData["Error"] = "Có lỗi xảy ra khi nạp các tệp Excel: " + ex.Message;
                 return RedirectToAction("Index");
             }
         }

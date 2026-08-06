@@ -7,83 +7,31 @@ using TuyenSinh.ViewModels;
 using TuyenSinh.Enums;
 using TuyenSinh.Models;
 
+using TuyenSinh.Helpers;
+
 namespace TuyenSinh.Services
 {
     public class HocBaService : IHocBaService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _hostingEnvironment;
-        private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly IFileStorageService _fileStorageService;
 
-        public HocBaService(ApplicationDbContext context, IWebHostEnvironment hostingEnvironment, IBackgroundJobClient backgroundJobClient)
+        public HocBaService(ApplicationDbContext context, IFileStorageService fileStorageService)
         {
             _context = context;
-            _hostingEnvironment = hostingEnvironment;
-            _backgroundJobClient = backgroundJobClient;
+            _fileStorageService = fileStorageService;
         }
 
-        public async Task<(bool Success, string Message, string? ExcelId, List<HocBaPreviewItem>? PreviewData)> UploadAndPreviewAsync(IFormFile file)
-        {
-            string excelId;
-            try
-            {
-                excelId = await LuuFileTamThoiAsync(file);
-            }
-            catch (Exception ex)
-            {
-                return (false, ex.Message, null, null);
-            }
 
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var filePath = Path.Combine(webRootPath, "uploads", excelId);
-
-
-            try
-            {
-                var previewList = ParseExcelToList(filePath, 100);
-
-                var previewData = previewList.Select(r => new HocBaPreviewItem
-                {
-                    Stt = r.STT,
-                    SoDDCN = r.SoDDCN,
-                    HoVaTen = r.HoVaTen,
-                    NgaySinh = r.NgaySinh?.ToString("dd/MM/yyyy"),
-                    GioiTinh = r.GioiTinh,
-                    Lop = r.Lop,
-                    ChuongTrinhHoc = r.ChuongTrinhHoc,
-                    DiemTrungBinhNam = r.DiemTrungBinhNam,
-                    ToanCN = r.ToanCN,
-                    VanCN = r.VanCN,
-                    VatLyCN = r.VatLyCN,
-                    HoaHocCN = r.HoaHocCN,
-                    SinhHocCN = r.SinhHocCN,
-                    NgoaiNguCN = r.NgoaiNguCN
-                }).ToList();
-
-                _backgroundJobClient.Schedule<IHocBaService>(s => s.DeleteExpiredFileAsync(excelId), TimeSpan.FromMinutes(30));
-
-                return (true, "Tải lên và đọc tập thành công.", excelId, previewData);
-            }
-            catch (Exception ex)
-            {
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
-                return (false, "Lỗi khi đọc tập Excel: " + ex.Message, null, null);
-            }
-        }
 
         public async Task<List<HocBaTHPTImport>?> GetPreviewDataAsync(string excelId, int? limit = null)
         {
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            var filePath = Path.Combine(uploadsFolder, excelId);
-
-            if (!System.IO.File.Exists(filePath))
+            if (!_fileStorageService.FileExists(excelId))
             {
                 return null;
             }
+
+            var filePath = _fileStorageService.GetUploadPath(excelId);
 
             try
             {
@@ -95,21 +43,7 @@ namespace TuyenSinh.Services
             }
         }
 
-        public async Task DeleteExpiredFileAsync(string excelId)
-        {
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            var filePath = Path.Combine(uploadsFolder, excelId);
 
-            if (System.IO.File.Exists(filePath))
-            {
-                try
-                {
-                    System.IO.File.Delete(filePath);
-                }
-                catch { }
-            }
-        }
 
         public async Task<KetQuaKiemTraHocBa> CheckHocBaAsync(string excelId)
         {
@@ -122,16 +56,14 @@ namespace TuyenSinh.Services
                 return result;
             }
 
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            var filePath = Path.Combine(uploadsFolder, excelId);
-
-            if (!System.IO.File.Exists(filePath))
+            if (!_fileStorageService.FileExists(excelId))
             {
                 result.ThanhCong = false;
                 result.ThongBao = "Tập Excel không tồn tại trên hệ thống.";
                 return result;
             }
+
+            var filePath = _fileStorageService.GetUploadPath(excelId);
 
             List<HocBaTHPTImport> records;
             try
@@ -242,55 +174,23 @@ namespace TuyenSinh.Services
             return result;
         }
 
-        public async Task<string> LuuFileTamThoiAsync(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                throw new ArgumentException("Tệp tin trống.");
-            }
 
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            if (extension != ".xlsx")
-            {
-                throw new ArgumentException("Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
-            }
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            var fileId = Guid.NewGuid().ToString() + extension;
-            var filePath = Path.Combine(uploadsFolder, fileId);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            _backgroundJobClient.Schedule<IHocBaService>(s => s.DeleteExpiredFileAsync(fileId), TimeSpan.FromMinutes(30));
-
-            return fileId;
-        }
 
         public async Task<KetQuaDoiChieu> DoiChieuHocBaVaNguyenVongAsync(string hocBaFileId, string nguyenVongFileId)
         {
             var ketQua = new KetQuaDoiChieu();
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
 
-            var fileHocBaPath = Path.Combine(uploadsFolder, hocBaFileId);
-            var fileNguyenVongPath = Path.Combine(uploadsFolder, nguyenVongFileId);
+            var fileHocBaPath = _fileStorageService.GetUploadPath(hocBaFileId);
+            var fileNguyenVongPath = _fileStorageService.GetUploadPath(nguyenVongFileId);
 
-            if (!System.IO.File.Exists(fileHocBaPath))
+            if (!_fileStorageService.FileExists(hocBaFileId))
             {
                 ketQua.ThanhCong = false;
                 ketQua.ThongBao = "File học bạ không tồn tại hoặc đã hết hạn.";
                 return ketQua;
             }
 
-            if (!System.IO.File.Exists(fileNguyenVongPath))
+            if (!_fileStorageService.FileExists(nguyenVongFileId))
             {
                 ketQua.ThanhCong = false;
                 ketQua.ThongBao = "File nguyện vọng không tồn tại hoặc đã hết hạn.";
@@ -302,9 +202,8 @@ namespace TuyenSinh.Services
             List<HocBaTHPTImport> danhSachHocBa;
             try
             {
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var msHB = new MemoryStream(System.IO.File.ReadAllBytes(fileHocBaPath));
-                using var pkgHB = new ExcelPackage(msHB);
+                ExcelHelper.EnsureLicenseContext();
+                using var pkgHB = new ExcelPackage(new FileInfo(fileHocBaPath));
                 var sheetHB = pkgHB.Workbook.Worksheets[0];
                 int totalRowsHB = sheetHB.Dimension.End.Row;
 
@@ -358,9 +257,8 @@ namespace TuyenSinh.Services
             List<NguyenVongItem> danhSachNV;
             try
             {
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var msNV = new MemoryStream(System.IO.File.ReadAllBytes(fileNguyenVongPath));
-                using var pkgNV = new ExcelPackage(msNV);
+                ExcelHelper.EnsureLicenseContext();
+                using var pkgNV = new ExcelPackage(new FileInfo(fileNguyenVongPath));
                 var sheetNV = pkgNV.Workbook.Worksheets[0];
                 int totalRowsNV = sheetNV.Dimension.End.Row;
                 
@@ -682,11 +580,9 @@ namespace TuyenSinh.Services
                 return result;
             }
 
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            var filePath = System.IO.File.Exists(fileId) ? fileId : Path.Combine(uploadsFolder, fileId);
+            var filePath = File.Exists(fileId) ? fileId : _fileStorageService.GetUploadPath(fileId);
 
-            if (!System.IO.File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
                 result.ThanhCong = false;
                 result.ThongBao = "Tệp Excel không tồn tại trên hệ thống.";
@@ -833,10 +729,9 @@ namespace TuyenSinh.Services
         private List<HocBaTHPTImport> ParseExcelToList(string filePath, int? limit = null)
         {
             var list = new List<HocBaTHPTImport>();
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelHelper.EnsureLicenseContext();
 
-            using (var stream = new MemoryStream(System.IO.File.ReadAllBytes(filePath)))
-            using (var package = new ExcelPackage(stream))
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
                 var sheet = package.Workbook.Worksheets[0];
                 int totalRows = sheet.Dimension.End.Row;
@@ -963,10 +858,9 @@ namespace TuyenSinh.Services
         public List<KetQuaNguyenVongImport> ReadKetQuaNguyenVongExcel(string filePath)
         {
             var list = new List<KetQuaNguyenVongImport>();
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelHelper.EnsureLicenseContext();
 
-            using (var stream = new MemoryStream(System.IO.File.ReadAllBytes(filePath)))
-            using (var package = new ExcelPackage(stream))
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
                 var sheet = package.Workbook.Worksheets[0];
                 int totalRows = sheet.Dimension.End.Row;

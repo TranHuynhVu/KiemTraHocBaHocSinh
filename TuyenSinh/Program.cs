@@ -32,6 +32,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Register Business Services
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IMonHocService, MonHocService>();
 builder.Services.AddScoped<IToHopMonService, ToHopMonService>();
 builder.Services.AddScoped<IHocBaService, HocBaService>();

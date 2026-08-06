@@ -3,84 +3,31 @@ using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using TuyenSinh.Data;
+using TuyenSinh.Helpers;
 using TuyenSinh.ViewModels;
 
 namespace TuyenSinh.Services
 {
     public class SoKhopNgoaiNguService : ISoKhopNgoaiNguService
     {
-        private readonly IWebHostEnvironment _hostingEnvironment;
-        private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly IFileStorageService _fileStorageService;
         private readonly ApplicationDbContext _context;
         private readonly IQuyDoiNNService _quyDoiNNService;
 
-        public SoKhopNgoaiNguService(IWebHostEnvironment hostingEnvironment, IBackgroundJobClient backgroundJobClient, ApplicationDbContext context, IQuyDoiNNService quyDoiNNService)
+        public SoKhopNgoaiNguService(IFileStorageService fileStorageService, ApplicationDbContext context, IQuyDoiNNService quyDoiNNService)
         {
-            _hostingEnvironment = hostingEnvironment;
-            _backgroundJobClient = backgroundJobClient;
+            _fileStorageService = fileStorageService;
             _context = context;
             _quyDoiNNService = quyDoiNNService;
         }
 
-        public async Task<string> LuuFileTamThoiAsync(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                throw new ArgumentException("Tệp tin trống.");
-            }
-
-            var extension = Path.GetExtension(file.FileName).ToLower();
-            if (extension != ".xlsx")
-            {
-                throw new ArgumentException("Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
-            }
-
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            var fileId = Guid.NewGuid().ToString() + extension;
-            var filePath = Path.Combine(uploadsFolder, fileId);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            _backgroundJobClient.Schedule<SoKhopNgoaiNguService>(s => s.DeleteExpiredFileAsync(fileId), TimeSpan.FromMinutes(30));
-
-            return fileId;
-        }
-
-        public async Task DeleteExpiredFileAsync(string fileId)
-        {
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-            var filePath = Path.Combine(uploadsFolder, fileId);
-
-            if (File.Exists(filePath))
-            {
-                try
-                {
-                    File.Delete(filePath);
-                }
-                catch { }
-            }
-        }
-
         public async Task<SoKhopNgoaiNguThongKeViewModel> Join3ExcelFilesAsync(string nvFileId, string dstsFileId, string nnFileId, string? search = null)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelHelper.EnsureLicenseContext();
 
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsFolder = Path.Combine(webRootPath, "uploads");
-
-            var pathNV = Path.Combine(uploadsFolder, nvFileId);
-            var pathDSTS = Path.Combine(uploadsFolder, dstsFileId);
-            var pathNN = Path.Combine(uploadsFolder, nnFileId);
+            var pathNV = _fileStorageService.GetUploadPath(nvFileId);
+            var pathDSTS = _fileStorageService.GetUploadPath(dstsFileId);
+            var pathNN = _fileStorageService.GetUploadPath(nnFileId);
 
             // Read File 1: Nguyện Vọng
             var (mapNV, totalCountNV) = ReadNguyenVongFile(pathNV);
@@ -161,19 +108,13 @@ namespace TuyenSinh.Services
             if (data.DanhSachKetQua == null || !data.DanhSachKetQua.Any())
                 return (false, "Không có dữ liệu so khớp để xuất Excel.", null);
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelHelper.EnsureLicenseContext();
             using var package = new ExcelPackage();
             var sheet = package.Workbook.Worksheets.Add("KetQua_SoKhop_3File");
 
             // Header styling
             string[] headers = new[] { "STT", "Số báo danh", "Họ Tên", "Ngày sinh", "ĐDCN", "Chứng chỉ ngoại ngữ", "Điểm / Bậc chứng chỉ", "Điểm quy đổi môn TA", "Mã xét tuyển" };
-            for (int col = 0; col < headers.Length; col++)
-            {
-                var cell = sheet.Cells[1, col + 1];
-                cell.Value = headers[col];
-                cell.Style.Font.Bold = true;
-                cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            }
+            ExcelHelper.FormatHeaderRow(sheet, headers);
 
             int row = 2;
             foreach (var item in data.DanhSachKetQua)
@@ -217,16 +158,14 @@ namespace TuyenSinh.Services
             int endRow = sheet.Dimension.End.Row;
 
             // Fixed column positions: Header at Row 5, Data starts at Row 6
-            // Column 2: Số ĐDCN
-            // Column 6: Mã xét tuyển
             int headerRow = 5;
             int colDdcn = 2;
             int colMaXetTuyen = 6;
 
             for (int r = headerRow + 1; r <= endRow; r++)
             {
-                var ddcn = ParseString(sheet.Cells[r, colDdcn].Value);
-                var mxt = ParseString(sheet.Cells[r, colMaXetTuyen].Value);
+                var ddcn = ExcelHelper.ParseString(sheet.Cells[r, colDdcn].Value);
+                var mxt = ExcelHelper.ParseString(sheet.Cells[r, colMaXetTuyen].Value);
 
                 if (string.IsNullOrWhiteSpace(ddcn)) continue;
                 totalRows++;
@@ -258,16 +197,14 @@ namespace TuyenSinh.Services
 
             int endRow = sheet.Dimension.End.Row;
 
-            // Fixed column positions: Header at Row 1, Data starts at Row 2
-            // Column 2: SBD, Column 3: Họ Tên, Column 4: ĐDCN, Column 5: Ngày sinh
             int colSbd = 2, colHoTen = 3, colDdcn = 4, colNgaySinh = 5;
 
             for (int r = 2; r <= endRow; r++)
             {
-                var ddcn = ParseString(sheet.Cells[r, colDdcn].Value);
-                var sbd = ParseString(sheet.Cells[r, colSbd].Value);
-                var hoTen = ParseString(sheet.Cells[r, colHoTen].Value);
-                var ngaySinh = ParseString(sheet.Cells[r, colNgaySinh].Value);
+                var ddcn = ExcelHelper.ParseString(sheet.Cells[r, colDdcn].Value);
+                var sbd = ExcelHelper.ParseString(sheet.Cells[r, colSbd].Value);
+                var hoTen = ExcelHelper.ParseString(sheet.Cells[r, colHoTen].Value);
+                var ngaySinh = ExcelHelper.ParseString(sheet.Cells[r, colNgaySinh].Value);
 
                 if (string.IsNullOrWhiteSpace(ddcn) && string.IsNullOrWhiteSpace(sbd) && string.IsNullOrWhiteSpace(hoTen)) continue;
                 totalRows++;
@@ -283,8 +220,8 @@ namespace TuyenSinh.Services
 
         private (List<(string Ddcn, string Sbd, string ChungChi, decimal DiemBac)> ListNN, Dictionary<string, (string Sbd, string ChungChi, decimal DiemBac)> MapNN, int TotalCount) ReadHopLeNnFile(string filePath)
         {
-            var list = new List<(string Ddcn, string? Sbd, string ChungChi, decimal DiemBac)>();
-            var map = new Dictionary<string, (string? Sbd, string ChungChi, decimal DiemBac)>(StringComparer.OrdinalIgnoreCase);
+            var list = new List<(string Ddcn, string Sbd, string ChungChi, decimal DiemBac)>();
+            var map = new Dictionary<string, (string Sbd, string ChungChi, decimal DiemBac)>(StringComparer.OrdinalIgnoreCase);
 
             if (!File.Exists(filePath)) return (list, map, 0);
 
@@ -298,53 +235,24 @@ namespace TuyenSinh.Services
 
             for (int r = 2; r <= endRow; r++)
             {
-                var ddcn = ParseString(sheet.Cells[r, colDdcn].Value);
-                var sbd = ParseString(sheet.Cells[r, colSbd].Value);
-                var cc = ParseString(sheet.Cells[r, colCc].Value);
+                var ddcn = ExcelHelper.ParseString(sheet.Cells[r, colDdcn].Value);
+                var sbd = ExcelHelper.ParseString(sheet.Cells[r, colSbd].Value);
+                var cc = ExcelHelper.ParseString(sheet.Cells[r, colCc].Value);
                 var diemVal = sheet.Cells[r, colDiem].Value;
-                var diem = ParseDiemBac(diemVal);
+                var diem = ExcelHelper.ParseDiemBac(diemVal);
 
                 if (string.IsNullOrWhiteSpace(ddcn) && string.IsNullOrWhiteSpace(sbd)) continue;
 
                 if (!string.IsNullOrWhiteSpace(ddcn))
                 {
-                    list.Add((ddcn, sbd, cc, diem));
-                    map[ddcn] = (sbd, cc, diem);
+                    var ccStr = cc ?? string.Empty;
+                    var sbdStr = sbd ?? string.Empty;
+                    list.Add((ddcn, sbdStr, ccStr, diem));
+                    map[ddcn] = (sbdStr, ccStr, diem);
                 }
             }
 
             return (list, map, list.Count);
-        }
-
-        private decimal ParseDiemBac(object? val)
-        {
-            if (val == null) return 0m;
-            var str = val.ToString()?.Trim();
-            if (string.IsNullOrEmpty(str)) return 0m;
-
-            // Nếu chứa dấu / (ví dụ: "5/B1", "5.5/B2"), lấy phần điểm số trước dấu /
-            if (str.Contains('/'))
-            {
-                var parts = str.Split('/');
-                str = parts[0].Trim();
-            }
-
-            // Thay dấu phẩy thành dấu chấm nếu có (ví dụ "5,5" -> "5.5")
-            str = str.Replace(',', '.');
-
-            if (decimal.TryParse(str, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal res))
-            {
-                return res;
-            }
-
-            return 0m;
-        }
-
-        private string? ParseString(object? val)
-        {
-            if (val == null) return null;
-            var str = val.ToString()?.Trim();
-            return string.IsNullOrEmpty(str) ? null : str;
         }
     }
 }

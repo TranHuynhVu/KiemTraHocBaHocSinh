@@ -15,10 +15,12 @@ namespace TuyenSinh.Controllers
     public class HocBaController : Controller
     {
         private readonly IHocBaService _hocBaService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public HocBaController(IHocBaService hocBaService)
+        public HocBaController(IHocBaService hocBaService, IFileStorageService fileStorageService)
         {
             _hocBaService = hocBaService;
+            _fileStorageService = fileStorageService;
         }
 
         [HttpGet("")]
@@ -30,16 +32,19 @@ namespace TuyenSinh.Controllers
         [HttpPost("tai-len")]
         public async Task<IActionResult> TaiLenHocBa(IFormFile file)
         {
-            var result = await _hocBaService.UploadAndPreviewAsync(file);
-            if (result.Success)
+            try
             {
+                var excelId = await _fileStorageService.LuuFileTamThoiAsync(file);
                 return Json(new
                 {
                     success = true,
-                    excelId = result.ExcelId
+                    excelId = excelId
                 });
             }
-            return Json(new { success = false, message = result.Message });
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet("xem-truoc")]
@@ -102,19 +107,19 @@ namespace TuyenSinh.Controllers
         {
             if (fileHocBa == null || fileHocBa.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn file học bạ.";
+                TempData["Error"] = "Vui lòng chọn file học bạ.";
                 return RedirectToAction("DoiChieuHocBaNguyenVong");
             }
             if (fileNguyenVong == null || fileNguyenVong.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn file nguyện vọng.";
+                TempData["Error"] = "Vui lòng chọn file nguyện vọng.";
                 return RedirectToAction("DoiChieuHocBaNguyenVong");
             }
 
             try
             {
-                var hocBaFileId = await _hocBaService.LuuFileTamThoiAsync(fileHocBa);
-                var nguyenVongFileId = await _hocBaService.LuuFileTamThoiAsync(fileNguyenVong);
+                var hocBaFileId = await _fileStorageService.LuuFileTamThoiAsync(fileHocBa);
+                var nguyenVongFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNguyenVong);
 
                 ViewBag.HocBaFileId = hocBaFileId;
                 ViewBag.NguyenVongFileId = nguyenVongFileId;
@@ -123,7 +128,7 @@ namespace TuyenSinh.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra trong quá trình nạp tệp: " + ex.Message;
+                TempData["Error"] = "Có lỗi xảy ra trong quá trình nạp tệp: " + ex.Message;
                 return RedirectToAction("DoiChieuHocBaNguyenVong");
             }
         }
@@ -172,13 +177,13 @@ namespace TuyenSinh.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng chọn file kiểm tra điểm sàn.";
+                TempData["Error"] = "Vui lòng chọn file kiểm tra điểm sàn.";
                 return RedirectToAction("KiemTraDiemSan");
             }
 
             try
             {
-                var fileId = await _hocBaService.LuuFileTamThoiAsync(file);
+                var fileId = await _fileStorageService.LuuFileTamThoiAsync(file);
                 ViewBag.FileId = fileId;
                 ViewBag.MaNganh = maNganh ?? "";
                 
@@ -190,7 +195,7 @@ namespace TuyenSinh.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi nạp file: " + ex.Message;
+                TempData["Error"] = "Có lỗi xảy ra khi nạp file: " + ex.Message;
                 return RedirectToAction("KiemTraDiemSan");
             }
         }
