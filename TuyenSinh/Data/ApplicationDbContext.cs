@@ -19,6 +19,7 @@ namespace TuyenSinh.Data
         public DbSet<BacNgoaiNgu> BacNgoaiNgus { get; set; } = null!;
         public DbSet<LoaiNgoaiNgu> LoaiNgoaiNgus { get; set; } = null!;
         public DbSet<QuyDoiNN> QuyDoiNNs { get; set; } = null!;
+        public DbSet<DiemCong> DiemCongs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -63,5 +64,6 @@ namespace TuyenSinh.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
+        public DbSet<TuyenSinh.Models.DiemCong> DiemCong { get; set; } = default!;
     }
 }

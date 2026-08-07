@@ -6,63 +6,66 @@
 
 
 
-<div class="upload-container py-3">
-    <!-- Breadcrumb / Header -->
-    <div class="mb-4">
-        <h4 class="mb-1 page-main-heading">Kiểm tra logic học bạ thí sinh</h4>
+<!-- Header Card -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-4 bg-white rounded-4 shadow-sm border">
+    <div>
+        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            <i class="fa-solid fa-clipboard-check text-primary fs-4"></i>
+            Kiểm tra logic học bạ thí sinh
+        </h4>
         <p class="text-muted small mb-0">Hệ thống đối chiếu dữ liệu điểm số các năm học THPT (Lớp 10, 11, 12) theo tổ hợp môn cấu hình.</p>
     </div>
+</div>
 
-    <!-- Upload Card -->
-    <div class="card custom-card">
-        <div class="card-header d-flex justify-content-between align-items-center mb-1">
-            <h5 class="m-0 upload-heading">
-                <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i>Nạp dữ liệu học bạ tuyển sinh
-            </h5>
-            <div class="d-flex justify-content-between align-items-center">
-                <a href="/admin/template/download/Mau_HocBa_THPT.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-primary fw-semibold">
-                    <i class="fa-solid fa-download me-1"></i>Tải file mẫu Excel
-                </a>
-            </div>
+<!-- Upload Card -->
+<div class="card border-0 shadow-sm mb-4 rounded-12 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 upload-heading">
+            <i class="fa-solid fa-cloud-arrow-up text-primary me-2"></i>Nạp dữ liệu học bạ tuyển sinh
+        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="/admin/template/download/Mau_HocBa_THPT.xlsx" class="btn btn-link btn-sm p-0 text-decoration-none small text-primary fw-semibold">
+                <i class="fa-solid fa-download me-1"></i>Tải file mẫu Excel
+            </a>
         </div>
-        <div class="card-body">
-            <form id="uploadForm" enctype="multipart/form-data">
-                <div class="drop-zone-wrapper" id="dropZone">
-                    <div class="upload-icon">
-                        <i class="fa-solid fa-file-excel"></i>
-                    </div>
-                    
-                    <h5 class="text-dark mb-2 drop-zone-title">Tải tệp tin học bạ lên hệ thống</h5>
-                    <p class="text-muted small mb-3">Kéo và thả tệp tin Excel/CSV của bạn vào đây, hoặc click để chọn tệp</p>
-                    
-                    <!-- Hidden input to make UI cleaner -->
-                    <input type="file" id="excelFile" name="file" class="file-input-hidden" accept=".xlsx" required />
-                    
-                    <div id="selectFileBtnWrapper">
-                        <button type="button" class="select-file-btn" id="btnSelectFile">
-                            <i class="fa-solid fa-folder-open"></i> Chọn tệp từ máy tính
-                        </button>
-                    </div>
-
-                    <!-- Selected file name display -->
-                    <div id="fileInfoWrapper" class="d-none">
-                        <div class="file-info-badge">
-                            <i class="fa-solid fa-file-excel flex-shrink-0"></i>
-                            <span id="selectedFileName" class="text-truncate-filename">Tên file ở đây</span>
-                            <i class="fa-solid fa-circle-check text-success ms-1 flex-shrink-0"></i>
-                        </div>
-                    </div>
-
-                    <div class="text-muted small mt-4">Hỗ trợ định dạng: <strong>.xlsx</strong> (Tối đa: 20MB)</div>
+    </div>
+    <div class="card-body p-4">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="drop-zone-wrapper" id="dropZone">
+                <div class="upload-icon">
+                    <i class="fa-solid fa-file-excel"></i>
                 </div>
-
-                <div class="text-center mt-4">
-                    <button type="button" id="btnUpload" class="btn btn-primary btn-submit-upload" disabled>
-                        <i class="fa-solid fa-cloud-arrow-up me-2"></i> Tiếp tục và Xem trước dữ liệu
+                
+                <h5 class="text-dark mb-2 drop-zone-title">Tải tệp tin học bạ lên hệ thống</h5>
+                <p class="text-muted small mb-3">Kéo và thả tệp tin Excel/CSV của bạn vào đây, hoặc click để chọn tệp</p>
+                
+                <!-- Hidden input to make UI cleaner -->
+                <input type="file" id="excelFile" name="file" class="file-input-hidden" accept=".xlsx" required />
+                
+                <div id="selectFileBtnWrapper">
+                    <button type="button" class="select-file-btn" id="btnSelectFile">
+                        <i class="fa-solid fa-folder-open"></i> Chọn tệp từ máy tính
                     </button>
                 </div>
-            </form>
-        </div>
+
+                <!-- Selected file name display -->
+                <div id="fileInfoWrapper" class="d-none">
+                    <div class="file-info-badge">
+                        <i class="fa-solid fa-file-excel flex-shrink-0"></i>
+                        <span id="selectedFileName" class="text-truncate-filename">Tên file ở đây</span>
+                        <i class="fa-solid fa-circle-check text-success ms-1 flex-shrink-0"></i>
+                    </div>
+                </div>
+
+                <div class="text-muted small mt-4">Hỗ trợ định dạng: <strong>.xlsx</strong> (Tối đa: 20MB)</div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="button" id="btnUpload" class="btn btn-primary btn-submit-upload" disabled>
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Tiếp tục và Xem trước dữ liệu
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

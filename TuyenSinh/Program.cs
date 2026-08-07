@@ -39,6 +39,7 @@ builder.Services.AddScoped<IHocBaService, HocBaService>();
 builder.Services.AddScoped<INganhService, NganhService>();
 builder.Services.AddScoped<ISoKhopNgoaiNguService, SoKhopNgoaiNguService>();
 builder.Services.AddScoped<IQuyDoiNNService, QuyDoiNNService>();
+builder.Services.AddScoped<IDiemCongService, DiemCongService>();
 
 // Configure Hangfire Services
 builder.Services.AddHangfire(config => config

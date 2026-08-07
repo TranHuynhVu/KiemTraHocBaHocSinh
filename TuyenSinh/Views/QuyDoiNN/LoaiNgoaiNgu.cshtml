@@ -5,19 +5,22 @@
     Layout = "_AdminLayout";
 }
 
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-4 bg-white rounded-4 shadow-sm border">
     <div>
-        <h4 class="mb-1 doichieu-page-title">Quản lý Loại Ngoại ngữ</h4>
+        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            <i class="fa-solid fa-certificate text-primary fs-4"></i>
+            Quản lý Loại Ngoại ngữ
+        </h4>
         <p class="text-muted small mb-0">Quản lý các loại chứng chỉ ngoại ngữ (IELTS, VSTEP, TOEIC, TOEFL...).</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <a href="/admin/quy-doi-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+        <a href="/admin/quy-doi-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5 px-3">
             <i class="fa-solid fa-list-check me-1"></i> Bảng quy đổi điểm
         </a>
-        <a href="/admin/quy-doi-ngoai-ngu/bac-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5">
+        <a href="/admin/quy-doi-ngoai-ngu/bac-ngoai-ngu" class="btn btn-outline-secondary btn-sm rounded-5 px-3">
             <i class="fa-solid fa-layer-group me-1"></i> Quản lý Bậc
         </a>
-        <a href="/admin/quy-doi-ngoai-ngu/loai-ngoai-ngu" class="btn btn-primary btn-sm rounded-5">
+        <a href="/admin/quy-doi-ngoai-ngu/loai-ngoai-ngu" class="btn btn-primary btn-sm rounded-5 px-3">
             <i class="fa-solid fa-certificate me-1"></i> Quản lý Loại (@Model.Count())
         </a>
     </div>

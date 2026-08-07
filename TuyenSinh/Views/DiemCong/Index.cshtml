@@ -1,0 +1,380 @@
+@model IEnumerable<TuyenSinh.Models.DiemCong>
+@{
+    ViewData["Title"] = "Quản lý điểm cộng";
+    ViewData["PageTitle"] = "Quản lý điểm cộng";
+    Layout = "_AdminLayout";
+
+    var dsNamHoc = ViewBag.DanhSachNamHoc as List<int> ?? new List<int>();
+    int namHocHienTai = ViewBag.NamHocHienTai ?? DateTime.Now.Year;
+    int totalItems = Model.Count();
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-4 bg-white rounded-4 shadow-sm border">
+    <div>
+        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calculator text-primary fs-4"></i>
+            Quản lý điểm cộng theo năm
+        </h4>
+        <p class="text-muted small mb-0">Thực hiện cập nhật, tra cứu, xóa và nạp danh sách điểm cộng ưu tiên tuyển sinh từ file Excel.</p>
+    </div>
+    
+    <!-- Bộ lọc & Thao tác chính -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <form method="get" asp-controller="DiemCong" asp-action="Index" class="d-flex align-items-center me-1">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0 fw-semibold text-primary">
+                    <i class="fa-solid fa-calendar-days me-1"></i> Năm học
+                </span>
+                <select name="namHoc" class="form-select form-select-sm border-start-0 font-weight-600 bg-light" onchange="this.form.submit()" style="min-width: 100px;">
+                    @foreach (var y in dsNamHoc)
+                    {
+                        <option value="@y" selected="@(y == namHocHienTai)">@y</option>
+                    }
+                </select>
+            </div>
+        </form>
+
+        <button type="button" class="btn btn-primary btn-sm rounded-5 px-3" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fa-solid fa-plus me-1"></i> Thêm mới
+        </button>
+
+        <button type="button" class="btn btn-success btn-sm rounded-5 text-white px-3" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+            <i class="fa-solid fa-file-excel me-1"></i> Import Excel
+        </button>
+
+        <a asp-controller="DiemCong" asp-action="XuatExcel" asp-route-namHoc="@namHocHienTai" class="btn btn-outline-success btn-sm rounded-5 px-3">
+            <i class="fa-solid fa-download me-1"></i> Xuất Excel
+        </a>
+
+        <a asp-controller="DiemCong" asp-action="DownloadTemplate" class="btn btn-outline-info btn-sm rounded-5 px-3">
+            <i class="fa-solid fa-file-arrow-down me-1"></i> File mẫu
+        </a>
+
+        <button type="button" class="btn btn-outline-danger btn-sm rounded-5 px-3" data-bs-toggle="modal" data-bs-target="#deleteByYearModal">
+            <i class="fa-solid fa-trash-can me-1"></i> Xóa năm @namHocHienTai
+        </button>
+    </div>
+</div>
+
+<!-- Main Table -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 font-weight-700 text-dark">
+            Danh sách điểm cộng (Năm @namHocHienTai)
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="diemCongTable" class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary font-weight-600">
+                    <tr>
+                        <th class="ps-4 py-3 text-center" style="width: 60px;">STT</th>
+                        <th class="py-3">ĐDCN / CCCD</th>
+                        <th class="py-3">Họ Tên</th>
+                        <th class="py-3 text-center">Ngày sinh</th>
+                        <th class="py-3 text-center">Mã xét tuyển</th>
+                        <th class="py-3 text-center">Mã PTXT</th>
+                        <th class="py-3 text-center">Mã tổ hợp</th>
+                        <th class="py-3 text-center">Loại điểm cộng</th>
+                        <th class="py-3 text-end">Điểm Cộng</th>
+                        <th class="pe-4 py-3 text-end" style="width: 140px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        int stt = 1;
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 text-center font-weight-600 text-muted">@(stt++)</td>
+                                <td class="font-weight-600 text-dark">
+                                    <span class="font-monospace text-primary">@item.DDCN</span>
+                                </td>
+                                <td class="font-weight-600 text-dark">@item.HoTen</td>
+                                <td class="text-center text-muted">
+                                    @(item.DOB == DateTime.MinValue ? "-" : item.DOB.ToString("dd/MM/yyyy"))
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@item.MaXetTuyen</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@item.MaPTXT</span>
+                                </td>
+                                <td class="text-center">
+                                    @(string.IsNullOrWhiteSpace(item.MaToHop) ? "-" : item.MaToHop)
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-bold">Loại @item.LoaiDiemCong</span>
+                                </td>
+                                <td class="text-center">
+                                    +@item.Diem.ToString("0.##")
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-circle me-1" 
+                                            title="Chỉnh sửa" data-bs-toggle="modal" data-bs-target="#editModal-@item.Id">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-circle" 
+                                            title="Xóa" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sửa & Modal Xóa danh sách điểm cộng -->
+@foreach (var item in Model)
+{
+    <!-- Modal Sửa -->
+    <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title font-weight-700 text-primary">
+                        <i class="fa-solid fa-user-pen me-2"></i>Chỉnh sửa thông tin điểm cộng
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="DiemCong" asp-action="Sua" method="post">
+                    <input type="hidden" name="Id" value="@item.Id" />
+                    <div class="modal-body p-4 text-start">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">ĐĐCN / Số CCCD <span class="text-danger">*</span></label>
+                                <input type="text" name="DDCN" value="@item.DDCN" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">Họ và Tên <span class="text-danger">*</span></label>
+                                <input type="text" name="HoTen" value="@item.HoTen" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">Ngày sinh</label>
+                                <input type="date" name="DOB" value="@(item.DOB == DateTime.MinValue ? "" : item.DOB.ToString("yyyy-MM-dd"))" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">Năm học</label>
+                                <input type="number" name="NamHoc" value="@item.NamHoc" class="form-control" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-600">Mã xét tuyển</label>
+                                <input type="text" name="MaXetTuyen" value="@item.MaXetTuyen" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-600">Mã PTXT</label>
+                                <input type="text" name="MaPTXT" value="@item.MaPTXT" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label font-weight-600">Mã tổ hợp</label>
+                                <input type="text" name="MaToHop" value="@item.MaToHop" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">Loại điểm cộng</label>
+                                <input type="number" name="LoaiDiemCong" value="@item.LoaiDiemCong" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-600">Điểm Cộng</label>
+                                <input type="number" step="0.01" name="Diem" value="@item.Diem.ToString(System.Globalization.CultureInfo.InvariantCulture)" class="form-control" required />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0 py-3 px-4">
+                        <button type="button" class="btn btn-secondary btn-sm px-4 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4 rounded-5">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xóa -->
+    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title font-weight-700 text-danger">Xác nhận xóa bản ghi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="DiemCong" asp-action="Xoa" method="post">
+                    <input type="hidden" name="id" value="@item.Id" />
+                    <input type="hidden" name="namHoc" value="@item.NamHoc" />
+                    <div class="modal-body p-4 text-center">
+                        <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
+                        <p class="mb-2 fw-semibold text-dark fs-6">Bạn có chắc chắn muốn xóa bản ghi điểm cộng này?</p>
+                        <div class="bg-light p-3 rounded-3 text-start small text-muted">
+                            <div><strong>Họ tên:</strong> @item.HoTen</div>
+                            <div><strong>ĐDCN:</strong> @item.DDCN</div>
+                            <div><strong>Mã xét tuyển:</strong> @item.MaXetTuyen | <strong>Điểm:</strong> +@item.Diem.ToString("0.##")</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0 py-3 px-4">
+                        <button type="button" class="btn btn-secondary btn-sm px-4 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger btn-sm px-4 rounded-5">Xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm Mới -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0 py-3 px-4">
+                <h5 class="modal-title font-weight-700 text-primary">
+                    <i class="fa-solid fa-user-plus me-2"></i>Thêm mới điểm cộng tuyển sinh
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="DiemCong" asp-action="Them" method="post">
+                <div class="modal-body p-4 text-start">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">ĐĐCN / Số CCCD <span class="text-danger">*</span></label>
+                            <input type="text" name="DDCN" class="form-control" placeholder="Nhập mã định danh..." required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">Họ và Tên <span class="text-danger">*</span></label>
+                            <input type="text" name="HoTen" class="form-control" placeholder="Nhập họ tên thí sinh..." required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">Ngày sinh</label>
+                            <input type="date" name="DOB" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">Năm học <span class="text-danger">*</span></label>
+                            <input type="number" name="NamHoc" value="@namHocHienTai" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-600">Mã xét tuyển</label>
+                            <input type="text" name="MaXetTuyen" class="form-control" placeholder="Ví dụ: 7510103" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-600">Mã PTXT</label>
+                            <input type="text" name="MaPTXT" class="form-control" placeholder="Ví dụ: 407" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label font-weight-600">Mã tổ hợp</label>
+                            <input type="text" name="MaToHop" class="form-control" placeholder="Ví dụ: A00" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">Loại điểm cộng</label>
+                            <input type="number" name="LoaiDiemCong" value="1" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label font-weight-600">Điểm Cộng <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="Diem" value="0.00" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-secondary btn-sm px-4 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 rounded-5">Thêm mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import Excel -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0 py-3 px-4">
+                <h5 class="modal-title font-weight-700 text-success">
+                    <i class="fa-solid fa-file-excel me-2"></i>Import danh sách điểm cộng từ Excel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="DiemCong" asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                <div class="modal-body p-4 text-start">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-600">Chọn năm học <span class="text-danger">*</span></label>
+                        <input type="number" name="namHoc" value="@namHocHienTai" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-weight-600">Chọn tệp Excel (.xlsx) <span class="text-danger">*</span></label>
+                        <input type="file" name="fileExcel" accept=".xlsx" class="form-control" required />
+                        <div class="form-text text-muted small mt-2">
+                            Thứ tự cột Excel yêu cầu: <br />
+                            <strong>1. STT | 2. ĐDCN | 3. Họ Tên | 4. Ngày sinh | 5. Mã xét tuyển | 6. Mã PTXT | 7. Mã tổ hợp | 8. Loại điểm cộng | 9. Điểm Cộng</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" id="overwriteExisting" name="overwriteExisting" value="true">
+                        <label class="form-check-label font-weight-600 text-danger" for="overwriteExisting">
+                            Xóa toàn bộ dữ liệu điểm cộng cũ của năm học này trước khi import
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <a asp-controller="DiemCong" asp-action="DownloadTemplate" class="btn btn-link btn-sm me-auto text-decoration-none">
+                        <i class="fa-solid fa-download me-1"></i> Tải file Excel mẫu
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm px-3 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success btn-sm px-4 rounded-5 text-white">Nạp dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa Theo Năm -->
+<div class="modal fade" id="deleteByYearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0 py-3 px-4">
+                <h5 class="modal-title font-weight-700 text-danger">Xóa toàn bộ điểm cộng năm @namHocHienTai</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="DiemCong" asp-action="XoaTheoNam" method="post">
+                <input type="hidden" name="namHoc" value="@namHocHienTai" />
+                <div class="modal-body p-4 text-center">
+                    <i class="fa-solid fa-triangle-exclamation text-danger fa-4x mb-3"></i>
+                    <p class="mb-2 fw-bold text-dark fs-5">CẢNH BÁO NGHUYÊN HIỂM</p>
+                    <p class="mb-0 text-muted">
+                        Bạn có chắc chắn muốn xóa <strong>toàn bộ @totalItems bản ghi</strong> điểm cộng của năm <strong>@namHocHienTai</strong> không?
+                        Thao tác này không thể hoàn tác!
+                    </p>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-secondary btn-sm px-4 rounded-5" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-4 rounded-5">Xác nhận xóa tất cả</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#diemCongTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+                },
+                "pageLength": 25,
+                "ordering": true,
+                "searching": true,
+                "autoWidth": false,
+                "responsive": true,
+                "dom": "<'row p-3 align-items-center'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                       "<'row'<'col-sm-12'tr>>" +
+                       "<'row p-3 align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+            });
+        });
+    </script>
+}

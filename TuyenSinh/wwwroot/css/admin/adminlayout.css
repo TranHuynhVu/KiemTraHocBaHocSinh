@@ -94,6 +94,27 @@ body {
     text-align: center;
 }
 
+.sidebar-link .submenu-arrow {
+    font-size: 0.8rem;
+    width: auto;
+    transition: transform 0.2s ease;
+    margin-left: auto;
+}
+
+.sidebar-link[aria-expanded="true"] .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+    padding-left: 12px;
+    margin-top: 4px;
+}
+
+.sidebar-submenu .sidebar-link {
+    font-size: 0.9rem;
+    padding: 10px 14px;
+}
+
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid #e5e5ea;
@@ -195,7 +216,6 @@ body {
     border-color: var(--primary-color);
     font-weight: 500;
     border-radius: 5px;
-    padding: 8px 16px;
     transition: all 0.2s ease;
 }
 
