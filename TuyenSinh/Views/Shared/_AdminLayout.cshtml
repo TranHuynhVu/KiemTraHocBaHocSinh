@@ -40,7 +40,7 @@
             @{
                 var controller = ViewContext.RouteData.Values["controller"]?.ToString();
                 var action = ViewContext.RouteData.Values["action"]?.ToString();
-                bool isQuanLyActive = (controller == "Admin" && (action == "QuanLyMonHoc" || action == "QuanLyToHopMon" || action == "QuanLyNganh")) || controller == "QuyDoiNN" || controller == "DiemCong";
+                bool isQuanLyActive = controller == "MonHoc" || controller == "ToHopMon" || controller == "Nganh" || controller == "QuyDoiNN" || controller == "DiemCong";
             }
             <li class="sidebar-item">
                 <a href="#quanLySubmenu" data-bs-toggle="collapse" class="sidebar-link d-flex align-items-center justify-content-between @(isQuanLyActive ? "active" : "")" aria-expanded="@(isQuanLyActive ? "true" : "false")">
@@ -53,19 +53,19 @@
                 <div class="collapse @(isQuanLyActive ? "show" : "")" id="quanLySubmenu">
                     <ul class="sidebar-submenu list-unstyled">
                         <li class="sidebar-item">
-                            <a href="/admin/mon-hoc" class="sidebar-link @(controller == "Admin" && action == "QuanLyMonHoc" ? "active" : "")">
+                            <a href="/admin/mon-hoc" class="sidebar-link @(controller == "MonHoc" ? "active" : "")">
                                 <i class="fa-solid fa-book"></i>
                                 <span>Môn học</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/admin/to-hop-mon" class="sidebar-link @(controller == "Admin" && action == "QuanLyToHopMon" ? "active" : "")">
+                            <a href="/admin/to-hop-mon" class="sidebar-link @(controller == "ToHopMon" ? "active" : "")">
                                 <i class="fa-solid fa-layer-group"></i>
                                 <span>Tổ hợp môn</span>
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="/admin/nganh" class="sidebar-link @(controller == "Admin" && action == "QuanLyNganh" ? "active" : "")">
+                            <a href="/admin/nganh" class="sidebar-link @(controller == "Nganh" ? "active" : "")">
                                 <i class="fa-solid fa-graduation-cap"></i>
                                 <span>Ngành học</span>
                             </a>

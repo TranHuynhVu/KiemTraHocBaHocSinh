@@ -5,6 +5,7 @@
     Layout = "_AdminLayout";
     var subjects = ViewBag.Subjects as IEnumerable<TuyenSinh.Models.MonHoc> ?? new List<TuyenSinh.Models.MonHoc>();
 }
+
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-4 bg-white rounded-4 shadow-sm border">
     <div>
         <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
@@ -18,15 +19,15 @@
 <div class="row">
     <!-- Form Thêm tổ hợp môn -->
     <div class="col-lg-4 mb-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+        <div class="card border-0 shadow-sm border-radius">
             <div class="card-header bg-white py-3 px-4">
-                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Thêm tổ hợp mới</h5>
+                <h5 class="mb-0 fw-bold text-dark">Thêm tổ hợp mới</h5>
             </div>
             <div class="card-body">
-                <form asp-controller="Admin" asp-action="ThemToHopMon" method="post">
+                <form asp-controller="ToHopMon" asp-action="ThemToHopMon" method="post">
                     <div class="mb-3">
                         <label class="form-label font-weight-500">Mã tổ hợp</label>
-                        <input type="text" name="maToHop" class="form-control" placeholder="Ví dụ: A00" style="text-transform: uppercase;" required />
+                        <input type="text" name="maToHop" class="form-control text-uppercase" placeholder="Ví dụ: A00" required />
                         <div class="form-text text-muted small">Mã nhận diện viết hoa (e.g. A00, D01, X02).</div>
                     </div>
                     <div class="mb-3">
@@ -36,7 +37,7 @@
                     </div>
                     <div class="mb-4">
                         <label class="form-label font-weight-500 d-block">Danh sách môn học cấu thành</label>
-                        <div class="border p-3 bg-light" style="max-height: 220px; overflow-y: auto; border-radius: 5px;">
+                        <div class="border p-3 bg-light border-radius overflow-auto mh-100">
                             @if (!subjects.Any())
                             {
                                 <span class="text-muted small">Chưa có môn học nào để chọn. Vui lòng tạo môn học trước.</span>
@@ -54,9 +55,9 @@
                                 }
                             }
                         </div>
-                        <div class="form-text text-muted small">Chọn các môn học bắt buộc của tổ hợp này.</div>
+                        <div class="form-text text-muted small mt-1">Chọn các môn học bắt buộc của tổ hợp này.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" @(subjects.Any() ? "" : "disabled")>
+                    <button type="submit" class="btn btn-primary w-100 rounded-5" @(subjects.Any() ? "" : "disabled")>
                         <i class="fa-solid fa-plus me-1"></i> Thêm tổ hợp môn
                     </button>
                 </form>
@@ -66,20 +67,20 @@
 
     <!-- Danh sách tổ hợp môn -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm" style="border-radius: 5px;">
+        <div class="card border-0 shadow-sm border-radius">
             <div class="card-header bg-white py-3 px-4 d-flex align-items-center justify-content-between">
-                <h5 class="mb-0" style="font-weight: 700; color: #1c1c1e;">Danh sách tổ hợp</h5>
+                <h5 class="mb-0 fw-bold text-dark">Danh sách tổ hợp</h5>
                 <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Count() Tổ hợp</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="border-collapse: collapse;">
-                        <thead class="table-light text-secondary font-weight-600" style="font-size: 0.85rem;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary font-weight-600 small">
                             <tr>
-                                <th class="ps-4 py-3" style="width: 120px;">Mã tổ hợp</th>
-                                <th class="py-3">Tên tổ hợp</th>
-                                <th class="py-3">Các môn học thành phần</th>
-                                <th class="pe-4 py-3 text-end" style="width: 200px;">Thao tác</th>
+                                <th class="ps-4 py-3 text-center">Mã tổ hợp</th>
+                                <th class="py-3 text-center">Tên tổ hợp</th>
+                                <th class="py-3 text-center">Các môn học thành phần</th>
+                                <th class="pe-4 py-3 text-center text-nowrap">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,17 +99,17 @@
                                 {
                                     <tr>
                                         <td class="ps-4">
-                                            <span class="badge bg-dark px-3 py-2" style="font-size: 0.85rem; font-weight: 600; border-radius: 3px;">
+                                            <span class="badge bg-dark px-3 py-2 fw-semibold rounded-1">
                                                 @item.MaToHop
                                             </span>
                                         </td>
-                                        <td class="font-weight-600" style="color: #1c1c1e;">@item.TenToHop</td>
+                                        <td class="font-weight-600 text-dark">@item.TenToHop</td>
                                         <td>
                                             @if (item.MonHocs != null && item.MonHocs.Count > 0)
                                             {
                                                 foreach (var sub in item.MonHocs)
                                                 {
-                                                    <span class="badge bg-light text-dark border me-1 px-2 py-1 mb-1" style="font-weight: 500; font-size: 0.75rem; border-radius: 3px;">
+                                                    <span class="badge bg-light text-dark border me-1 px-2 py-1 mb-1 fw-normal rounded-1">
                                                         @sub.TenMonHoc
                                                     </span>
                                                 }
@@ -118,13 +119,13 @@
                                                 <span class="text-danger small">Không có môn học!</span>
                                             }
                                         </td>
-                                        <td class="pe-4 text-end">
-                                            <button type="button" class="btn btn-outline-primary btn-sm me-2" 
-                                                    data-bs-toggle="modal" data-bs-target="#editModal-@item.Id" style="border-radius: 5px;">
+                                        <td class="pe-4 text-center text-nowrap">
+                                            <button type="button" class="btn btn-outline-primary btn-sm me-1 rounded-3" 
+                                                    data-bs-toggle="modal" data-bs-target="#editModal-@item.Id">
                                                 <i class="fa-solid fa-pen-to-square"></i> Sửa
                                             </button>
-                                            <button type="button" class="btn btn-outline-danger btn-sm" 
-                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id" style="border-radius: 5px;">
+                                            <button type="button" class="btn btn-outline-danger btn-sm rounded-3" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
                                                 <i class="fa-solid fa-trash"></i> Xóa
                                             </button>
                                         </td>
@@ -133,17 +134,17 @@
                                     <!-- Modal Sửa tổ hợp môn -->
                                     <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                            <div class="modal-content border-0 shadow rounded-3 overflow-hidden">
                                                 <div class="modal-header bg-light border-0 py-3 px-4">
-                                                    <h5 class="modal-title font-weight-700" style="color: #1c1c1e;">Chỉnh sửa tổ hợp</h5>
+                                                    <h5 class="modal-title font-weight-700 text-dark">Chỉnh sửa tổ hợp</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <form asp-controller="Admin" asp-action="SuaToHopMon" method="post">
-                                                    <div class="modal-body p-4">
+                                                <form asp-controller="ToHopMon" asp-action="SuaToHopMon" method="post">
+                                                    <div class="modal-body p-4 text-start">
                                                         <input type="hidden" name="id" value="@item.Id" />
                                                         <div class="mb-3">
                                                             <label class="form-label font-weight-500">Mã tổ hợp</label>
-                                                            <input type="text" name="maToHop" value="@item.MaToHop" class="form-control" style="text-transform: uppercase;" required />
+                                                            <input type="text" name="maToHop" value="@item.MaToHop" class="form-control text-uppercase" required />
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label font-weight-500">Tên tổ hợp</label>
@@ -151,7 +152,7 @@
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label font-weight-500 d-block">Danh sách môn học cấu thành</label>
-                                                            <div class="border p-3 bg-light" style="max-height: 220px; overflow-y: auto; border-radius: 5px;">
+                                                            <div class="border p-3 bg-light rounded-3 overflow-auto">
                                                                 @foreach (var sub in subjects)
                                                                 {
                                                                     bool isSelected = item.MonHocs != null && item.MonHocs.Any(m => m.Id == sub.Id);
@@ -166,8 +167,8 @@
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
-                                                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2" style="border-radius: 5px;">Cập nhật</button>
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-primary btn-sm px-3 py-2 rounded-3">Cập nhật</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -177,24 +178,24 @@
                                     <!-- Modal Xóa tổ hợp môn -->
                                     <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content" style="border-radius: 5px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                            <div class="modal-content border-0 shadow rounded-3 overflow-hidden">
                                                 <div class="modal-header bg-light border-0 py-3 px-4">
-                                                    <h5 class="modal-title font-weight-700" style="color: #d9534f;">Xác nhận xóa tổ hợp</h5>
+                                                    <h5 class="modal-title font-weight-700 text-danger">Xác nhận xóa tổ hợp</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
-                                                <form asp-controller="Admin" asp-action="XoaToHopMon" method="post">
+                                                <form asp-controller="ToHopMon" asp-action="XoaToHopMon" method="post">
                                                     <div class="modal-body p-4 text-center">
                                                         <input type="hidden" name="id" value="@item.Id" />
                                                         <i class="fa-solid fa-triangle-exclamation text-warning fa-3x mb-3"></i>
-                                                        <p class="mb-1" style="font-weight: 600; font-size: 1.1rem; color: #1c1c1e;">Bạn có chắc chắn muốn xóa tổ hợp này?</p>
+                                                        <p class="mb-1 fw-semibold fs-6 text-dark">Bạn có chắc chắn muốn xóa tổ hợp này?</p>
                                                         <p class="text-danger small mb-0">Hành động này không thể hoàn tác!</p>
-                                                        <div class="bg-light p-3 mt-3 font-weight-600" style="border-radius: 5px;">
-                                                            Tổ hợp: <span class="badge bg-dark px-2 py-1" style="border-radius: 5px;">@item.MaToHop</span> - @item.TenToHop
+                                                        <div class="bg-light p-3 mt-3 font-weight-600 rounded-3">
+                                                            Tổ hợp: <span class="badge bg-dark px-2 py-1 rounded-1">@item.MaToHop</span> - @item.TenToHop
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2" data-bs-dismiss="modal" style="border-radius: 5px;">Hủy</button>
-                                                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2" style="border-radius: 5px;">Xóa</button>
+                                                        <button type="button" class="btn btn-secondary btn-sm px-3 py-2 rounded-3" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3 py-2 rounded-3">Xóa</button>
                                                     </div>
                                                 </form>
                                             </div>

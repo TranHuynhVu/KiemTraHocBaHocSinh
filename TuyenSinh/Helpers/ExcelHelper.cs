@@ -1,11 +1,14 @@
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using System;
 using System.Globalization;
 
 namespace TuyenSinh.Helpers
 {
     public static class ExcelHelper
     {
+        public const string ExcelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
         public static void EnsureLicenseContext()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -62,6 +65,34 @@ namespace TuyenSinh.Helpers
             }
 
             return 0m;
+        }
+
+        public static DateTime ParseDate(object? val)
+        {
+            if (val == null) return DateTime.MinValue;
+
+            if (val is DateTime dt) return dt;
+
+            if (val is double dbl)
+            {
+                try { return DateTime.FromOADate(dbl); } catch { }
+            }
+
+            var str = val.ToString()?.Trim();
+            if (string.IsNullOrEmpty(str)) return DateTime.MinValue;
+
+            string[] formats = { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd", "dd-MM-yyyy", "MM/dd/yyyy", "d/M/yy", "dd/MM/yy" };
+            if (DateTime.TryParseExact(str, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+            {
+                return parsedDate;
+            }
+
+            if (DateTime.TryParse(str, out var generalDate))
+            {
+                return generalDate;
+            }
+
+            return DateTime.MinValue;
         }
 
         public static void FormatHeaderRow(ExcelWorksheet sheet, string[] headers, int row = 1)

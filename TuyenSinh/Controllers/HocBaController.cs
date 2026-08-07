@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TuyenSinh.Services;
 using OfficeOpenXml;
 using TuyenSinh.ViewModels;
+using TuyenSinh.Helpers;
 
 namespace TuyenSinh.Controllers
 {
@@ -93,7 +94,7 @@ namespace TuyenSinh.Controllers
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ThiSinh_ThieuDiem_ToHop.xlsx");
+            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "ThiSinh_ThieuDiem_ToHop.xlsx");
         }
 
         [HttpGet("doi-chieu")]
@@ -161,7 +162,7 @@ namespace TuyenSinh.Controllers
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DoiChieu_HocBa_NguyenVong.xlsx");
+            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "DoiChieu_HocBa_NguyenVong.xlsx");
         }
 
         [HttpGet("kiem-tra-diem-san")]
@@ -229,7 +230,7 @@ namespace TuyenSinh.Controllers
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KetQua_KiemTra_DiemSan.xlsx");
+            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "KetQua_KiemTra_DiemSan.xlsx");
         }
     }
 }

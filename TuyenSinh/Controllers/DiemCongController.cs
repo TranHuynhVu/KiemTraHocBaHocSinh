@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TuyenSinh.Models;
 using TuyenSinh.Services;
+using TuyenSinh.Helpers;
 
 namespace TuyenSinh.Controllers
 {
@@ -123,7 +124,7 @@ namespace TuyenSinh.Controllers
                 return RedirectToAction(nameof(Index), new { namHoc });
             }
 
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.Message);
+            return File(result.FileContents, ExcelHelper.ExcelMimeType, result.Message);
         }
 
         [HttpGet("download-template")]
@@ -136,7 +137,7 @@ namespace TuyenSinh.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.Message);
+            return File(result.FileContents, ExcelHelper.ExcelMimeType, result.Message);
         }
     }
 }

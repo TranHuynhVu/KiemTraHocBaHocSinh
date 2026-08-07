@@ -223,7 +223,7 @@ namespace TuyenSinh.Services
                     }
 
                     var dobVal = sheet.Cells[r, 4].Value;
-                    DateTime dob = ParseDate(dobVal);
+                    DateTime dob = ExcelHelper.ParseDate(dobVal);
 
                     var maXetTuyen = ExcelHelper.ParseString(sheet.Cells[r, 5].Value) ?? string.Empty;
                     var maPTXT = ExcelHelper.ParseString(sheet.Cells[r, 6].Value) ?? string.Empty;
@@ -355,34 +355,6 @@ namespace TuyenSinh.Services
             sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
 
             return await Task.FromResult((true, "Mau_Import_DiemCong.xlsx", package.GetAsByteArray()));
-        }
-
-        private DateTime ParseDate(object? val)
-        {
-            if (val == null) return DateTime.MinValue;
-
-            if (val is DateTime dt) return dt;
-
-            if (val is double dbl)
-            {
-                try { return DateTime.FromOADate(dbl); } catch { }
-            }
-
-            var str = val.ToString()?.Trim();
-            if (string.IsNullOrEmpty(str)) return DateTime.MinValue;
-
-            string[] formats = { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd", "dd-MM-yyyy", "MM/dd/yyyy", "d/M/yy", "dd/MM/yy" };
-            if (DateTime.TryParseExact(str, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-            {
-                return parsedDate;
-            }
-
-            if (DateTime.TryParse(str, out var generalDate))
-            {
-                return generalDate;
-            }
-
-            return DateTime.MinValue;
         }
     }
 }
