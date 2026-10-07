@@ -4,84 +4,179 @@
     Layout = "_AdminLayout";
 }
 
-<div class="py-3">
+<div class="py-2">
     <!-- Header Page -->
-    <div class="mb-4 pb-3 border-bottom">
-        <h4 class="mb-1" style="font-weight: 700; color: #0f172a;">Hệ thống Quản lý Tuyển sinh</h4>
-        <p class="text-muted mb-0" style="font-size: 0.9rem;">Chọn các phân hệ công việc dưới đây để quản lý và vận hành quy trình đối chiếu hồ sơ.</p>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-4 bg-white rounded-3 shadow-sm border">
+        <div>
+            <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-primary fs-4"></i>
+                Tổng quan hệ thống
+            </h4>
+            <p class="text-muted small mb-0">Hệ thống quản lý danh mục và đối chiếu xét tuyển học bạ thí sinh UTE.</p>
+        </div>
     </div>
 
-    <!-- Cards Row -->
-    <div class="row g-4">
-        <!-- Card 1: Môn học (Blue) -->
-        <div class="col-md-4">
-            <div class="func-card func-card-blue">
-                <div>
-                    <div class="icon-box">
-                        <i class="fa-solid fa-book"></i>
-                    </div>
-                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Quản lý môn học</h5>
-                    <p class="text-muted small mb-4" style="line-height: 1.5;">Khai báo danh mục môn học trong hệ thống và định nghĩa tên cột ánh xạ tương ứng trong tệp Excel học bạ của thí sinh.</p>
+    <!-- Dải số liệu -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="overview-stat">
+                <div class="overview-stat-icon overview-icon-blue">
+                    <i class="fa-solid fa-book"></i>
                 </div>
                 <div>
-                    <div class="mb-3">
-                        <span class="badge-custom">
-                            @ViewBag.CountSubjects môn học cấu hình
-                        </span>
-                    </div>
-                    <a href="/admin/mon-hoc" class="func-btn">
-                        <span>Đến trang quản lý</span>
-                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-                    </a>
+                    <div class="overview-stat-val">@(ViewBag.CountSubjects ?? 0)</div>
+                    <div class="overview-stat-lbl">Môn học cấu hình</div>
                 </div>
             </div>
         </div>
-
-        <!-- Card 2: Quản lý tổ hợp (Purple) -->
-        <div class="col-md-4">
-            <div class="func-card func-card-purple">
-                <div>
-                    <div class="icon-box">
-                        <i class="fa-solid fa-layer-group"></i>
-                    </div>
-                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Quản lý tổ hợp môn</h5>
-                    <p class="text-muted small mb-4" style="line-height: 1.5;">Định nghĩa và quản lý các tổ hợp môn học tuyển sinh (A00, A01, B00...). Cấu hình các môn học thành phần cho mỗi tổ hợp.</p>
+        <div class="col-12 col-md-4">
+            <div class="overview-stat">
+                <div class="overview-stat-icon overview-icon-purple">
+                    <i class="fa-solid fa-layer-group"></i>
                 </div>
                 <div>
-                    <div class="mb-3">
-                        <span class="badge-custom">
-                            Tổng số tổ hợp: @ViewBag.CountCombinations
-                        </span>
-                    </div>
-                    <a href="/admin/to-hop-mon" class="func-btn">
-                        <span>Thiết lập tổ hợp</span>
-                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-                    </a>
+                    <div class="overview-stat-val">@(ViewBag.CountCombinations ?? 0)</div>
+                    <div class="overview-stat-lbl">Tổ hợp môn xét tuyển</div>
                 </div>
             </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div class="overview-stat">
+                <div class="overview-stat-icon overview-icon-green">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <div class="overview-stat-val">@(ViewBag.CountMajors ?? 0)</div>
+                    <div class="overview-stat-lbl">Ngành đào tạo</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Card 3: Kiểm tra học bạ (Green) -->
-        <div class="col-md-4">
-            <div class="func-card func-card-green">
-                <div>
-                    <div class="icon-box">
-                        <i class="fa-solid fa-clipboard-check"></i>
+    <!-- Nhóm Nghiệp vụ xét tuyển -->
+    <div class="mb-4">
+        <div class="overview-group-title">
+            <i class="fa-solid fa-bolt-lightning text-primary"></i>
+            <span>Nghiệp vụ xét tuyển</span>
+        </div>
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="/admin/hoc-ba" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-blue">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
                     </div>
-                    <h5 class="mb-2" style="font-weight: 700; color: #0f172a; font-size: 1.1rem;">Kiểm tra học bạ</h5>
-                    <p class="text-muted small mb-4" style="line-height: 1.5;">Tải tệp danh sách học bạ từ tệp Excel lên. Hệ thống tự động phân tích dữ liệu điểm số và đối chiếu tính hợp lệ của hồ sơ.</p>
-                </div>
-                <div>
-                    <div class="mb-3">
-                        <span class="badge-custom">
-                            Phân tích tệp Excel tự động
-                        </span>
+                    <div class="overview-item-name">Kiểm tra học bạ</div>
+                    <p class="overview-item-desc">Nạp file Excel học bạ và kiểm tra điểm 6 học kỳ.</p>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="/admin/hoc-ba/doi-chieu" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-purple">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
                     </div>
-                    <a href="/admin/hoc-ba" class="func-btn">
-                        <span>Bắt đầu đối chiếu</span>
-                        <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem;"></i>
-                    </a>
-                </div>
+                    <div class="overview-item-name">Đối chiếu HB &amp; NV</div>
+                    <p class="overview-item-desc">So khớp học bạ với nguyện vọng xét tuyển thí sinh.</p>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="/admin/hoc-ba/kiem-tra-diem-san" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-green">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Kiểm tra điểm sàn</div>
+                    <p class="overview-item-desc">Kiểm tra ngưỡng điểm sàn đầu vào theo ngành.</p>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+                <a href="/admin/so-khop-ngoai-ngu" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-orange">
+                            <i class="fa-solid fa-code-compare"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">So khớp ngoại ngữ</div>
+                    <p class="overview-item-desc">Kiểm tra hợp lệ và quy đổi điểm chứng chỉ quốc tế.</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nhóm Danh mục hệ thống -->
+    <div>
+        <div class="overview-group-title">
+            <i class="fa-solid fa-bars-progress text-primary"></i>
+            <span>Danh mục hệ thống</span>
+        </div>
+        <div class="row g-3 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+            <div class="col">
+                <a href="/admin/mon-hoc" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-blue">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Môn học</div>
+                    <p class="overview-item-desc">Danh mục môn học &amp; ánh xạ cột Excel.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="/admin/to-hop-mon" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-purple">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Tổ hợp môn</div>
+                    <p class="overview-item-desc">Thiết lập các tổ hợp môn xét tuyển.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="/admin/nganh" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-green">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Ngành học</div>
+                    <p class="overview-item-desc">Danh mục ngành, tổ hợp &amp; ngưỡng sàn.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="/admin/quy-doi-ngoai-ngu" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-orange">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Quy đổi ngoại ngữ</div>
+                    <p class="overview-item-desc">Bảng quy đổi chứng chỉ ngoại ngữ.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="/admin/diem-cong" class="overview-item-card">
+                    <div class="overview-item-top">
+                        <div class="overview-item-icon overview-icon-teal">
+                            <i class="fa-solid fa-plus-minus"></i>
+                        </div>
+                        <i class="fa-solid fa-chevron-right overview-item-arrow"></i>
+                    </div>
+                    <div class="overview-item-name">Điểm cộng</div>
+                    <p class="overview-item-desc">Cấu hình điểm ưu tiên tuyển sinh.</p>
+                </a>
             </div>
         </div>
     </div>

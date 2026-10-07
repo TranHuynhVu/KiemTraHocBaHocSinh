@@ -16,8 +16,6 @@ namespace TuyenSinh.Controllers
             _quyDoiNNService = quyDoiNNService;
         }
 
-        #region Quản lý Điểm Quy Đổi Ngoại Ngữ (Trang chính & Matrix)
-
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
@@ -72,10 +70,6 @@ namespace TuyenSinh.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        #endregion
-
-        #region Quản lý Bậc Ngoại Ngữ
-
         [HttpGet("bac-ngoai-ngu")]
         public async Task<IActionResult> QuanLyBac()
         {
@@ -128,10 +122,6 @@ namespace TuyenSinh.Controllers
             return RedirectToAction(nameof(QuanLyBac));
         }
 
-        #endregion
-
-        #region Quản lý Loại Ngoại Ngữ
-
         [HttpGet("loai-ngoai-ngu")]
         public async Task<IActionResult> QuanLyLoai()
         {
@@ -183,7 +173,5 @@ namespace TuyenSinh.Controllers
             }
             return RedirectToAction(nameof(QuanLyLoai));
         }
-
-        #endregion
     }
 }

@@ -42,9 +42,6 @@ namespace TuyenSinh.Services
                 return null;
             }
         }
-
-
-
         public async Task<KetQuaKiemTraHocBa> CheckHocBaAsync(string excelId)
         {
             var result = new KetQuaKiemTraHocBa();
@@ -173,9 +170,6 @@ namespace TuyenSinh.Services
 
             return result;
         }
-
-
-
         public async Task<KetQuaDoiChieu> DoiChieuHocBaVaNguyenVongAsync(string hocBaFileId, string nguyenVongFileId)
         {
             var ketQua = new KetQuaDoiChieu();

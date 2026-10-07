@@ -11,13 +11,16 @@ namespace TuyenSinh.Controllers
     {
         private readonly IMonHocService _monHocService;
         private readonly IToHopMonService _toHopMonService;
+        private readonly INganhService _nganhService;
 
         public AdminController(
             IMonHocService monHocService,
-            IToHopMonService toHopMonService)
+            IToHopMonService toHopMonService,
+            INganhService nganhService)
         {
             _monHocService = monHocService;
             _toHopMonService = toHopMonService;
+            _nganhService = nganhService;
         }
 
         [HttpGet("")]
@@ -25,8 +28,11 @@ namespace TuyenSinh.Controllers
         {
             var subjects = await _monHocService.LayDanhSachMonHocAsync();
             var combinations = await _toHopMonService.LayDanhSachToHopAsync();
+            var majors = await _nganhService.LayDanhSachNganhAsync();
+
             ViewBag.CountSubjects = subjects.Count;
             ViewBag.CountCombinations = combinations.Count;
+            ViewBag.CountMajors = majors.Count;
             return View("Index");
         }
     }
