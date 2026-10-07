@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TuyenSinh.ViewModels
+namespace TuyenSinh.ViewModels.Account
 {
     public class LoginViewModel
     {

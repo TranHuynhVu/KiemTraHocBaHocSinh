@@ -1,67 +1,66 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Data;
 using TuyenSinh.Models;
 
 namespace TuyenSinh.Services
 {
-    public class NganhService : INganhService
+    public sealed class NganhService(ApplicationDbContext context, ILogger<NganhService> logger) : INganhService
     {
-        private readonly ApplicationDbContext _context;
-
-        public NganhService(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         public async Task<List<Nganh>> LayDanhSachNganhAsync()
         {
-            return await _context.Nganhs
+            return await context.Nganhs
                 .Include(n => n.ToHopNganhs)
                 .ThenInclude(th => th.ToHopMon)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
-        public async Task<(bool Success, string Message)> NhapNganhTuExcelAsync(IFormFile file)
+        public async Task<ServiceResult> NhapNganhTuExcelAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
-                return (false, "Vui lòng chọn tệp Excel.");
+                return ServiceResult.Fail("Vui lòng chọn tệp Excel.");
             }
 
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (extension != ".xlsx")
             {
-                return (false, "Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
+                return ServiceResult.Fail("Chỉ chấp nhận tệp tin Excel định dạng .xlsx.");
             }
 
             try
             {
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using (var stream = file.OpenReadStream())
-                using (var package = new ExcelPackage(stream))
+                using var stream = file.OpenReadStream();
+                using var package = new ExcelPackage(stream);
+                var worksheet = package.Workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("Thông tin ĐKXT HB"))
+                                ?? package.Workbook.Worksheets[0];
+
+                if (worksheet?.Dimension == null)
                 {
-                    var worksheet = package.Workbook.Worksheets.FirstOrDefault(w => w.Name.Contains("Thông tin ĐKXT HB"))
-                                    ?? package.Workbook.Worksheets[0];
+                    return ServiceResult.Fail("Tệp Excel không chứa dữ liệu.");
+                }
 
-                    int totalRows = worksheet.Dimension.End.Row;
-                    int startRow = 7;
+                int totalRows = worksheet.Dimension.End.Row;
+                int startRow = 7;
 
-                    var existingToHops = await _context.ToHopMons.ToListAsync();
-                    var missingToHops = new HashSet<string>();
+                var existingToHops = await context.ToHopMons.ToListAsync();
+                var missingToHops = new HashSet<string>();
 
-                    using var transaction = await _context.Database.BeginTransactionAsync();
-                    try
-                    {
-                        _context.ToHopNganhs.RemoveRange(_context.ToHopNganhs);
-                        _context.Nganhs.RemoveRange(_context.Nganhs);
-                        await _context.SaveChangesAsync();
+                using var transaction = await context.Database.BeginTransactionAsync();
+                try
+                {
+                    context.ToHopNganhs.RemoveRange(context.ToHopNganhs);
+                    context.Nganhs.RemoveRange(context.Nganhs);
+                    await context.SaveChangesAsync();
 
                     for (int r = startRow; r <= totalRows; r++)
                     {
@@ -78,10 +77,8 @@ namespace TuyenSinh.Services
                         var diemSanToan = worksheet.Cells[r, 10].Value?.ToString()?.Trim();
                         if (string.IsNullOrEmpty(maNganh) || string.IsNullOrEmpty(tenNganh)) continue;
 
-                        float heSoThpt = 0;
-                        float heSoHb = 0;
-                        float.TryParse(heSoThptStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out heSoThpt);
-                        float.TryParse(heSoHbStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out heSoHb);
+                        float.TryParse(heSoThptStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float heSoThpt);
+                        float.TryParse(heSoHbStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float heSoHb);
 
                         var nganh = new Nganh
                         {
@@ -89,14 +86,14 @@ namespace TuyenSinh.Services
                             TenNganh = tenNganh,
                             HeSoTHPT = heSoThpt,
                             HeSoHB = heSoHb,
-                            ToHopXetTuyen = toHopCodesStr,
-                            NguongDauVao = nguongDauVao,
+                            ToHopXetTuyen = toHopCodesStr ?? string.Empty,
+                            NguongDauVao = nguongDauVao ?? string.Empty,
                             DXT = decimal.TryParse(dxt, out var dxtValue) ? dxtValue : 0,
                             DiemSanToan = decimal.TryParse(diemSanToan, out var diemValue) ? diemValue : 0
                         };
 
-                        _context.Nganhs.Add(nganh);
-                        await _context.SaveChangesAsync();
+                        context.Nganhs.Add(nganh);
+                        await context.SaveChangesAsync();
 
                         if (!string.IsNullOrEmpty(toHopCodesStr))
                         {
@@ -118,33 +115,34 @@ namespace TuyenSinh.Services
                                         MaNganhId = nganh.Id,
                                         ToHopId = toHop.Id
                                     };
-                                    _context.ToHopNganhs.Add(link);
+                                    context.ToHopNganhs.Add(link);
                                 }
                             }
                         }
                     }
 
-                        await _context.SaveChangesAsync();
-                        await transaction.CommitAsync();
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
-                        if (missingToHops.Any())
-                        {
-                            var missingStr = string.Join(", ", missingToHops);
-                            return (false, $"Nhập dữ liệu hoàn tất. Tuy nhiên, các tổ hợp sau chưa tồn tại trong hệ thống và bị bỏ qua: {missingStr}");
-                        }
-
-                        return (true, "Nhập dữ liệu danh sách ngành tuyển sinh từ Excel thành công!");
-                    }
-                    catch (Exception)
+                    if (missingToHops.Any())
                     {
-                        await transaction.RollbackAsync();
-                        throw;
+                        var missingStr = string.Join(", ", missingToHops);
+                        return ServiceResult.Fail($"Nhập dữ liệu hoàn tất. Tuy nhiên, các tổ hợp sau chưa tồn tại trong hệ thống và bị bỏ qua: {missingStr}");
                     }
+
+                    return ServiceResult.Ok("Nhập dữ liệu danh sách ngành tuyển sinh từ Excel thành công!");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    logger.LogError(ex, "Lỗi xảy ra trong quá trình lưu dữ liệu ngành tuyển sinh.");
+                    throw;
                 }
             }
             catch (Exception ex)
             {
-                return (false, "Lỗi khi import file Excel: " + ex.Message);
+                logger.LogError(ex, "Lỗi khi import file Excel ngành tuyển sinh.");
+                return ServiceResult.Fail("Lỗi khi import file Excel: " + ex.Message);
             }
         }
     }

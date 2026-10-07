@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using TuyenSinh.ViewModels;
+using TuyenSinh.ViewModels.Account;
 using TuyenSinh.Models;
 
 namespace TuyenSinh.Controllers

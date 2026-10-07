@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Models;
 
 namespace TuyenSinh.Services
@@ -7,8 +8,8 @@ namespace TuyenSinh.Services
     public interface IMonHocService
     {
         Task<List<MonHoc>> LayDanhSachMonHocAsync();
-        Task<(bool Success, string Message)> ThemMonHocAsync(string tenMonHoc, string fieldName);
-        Task<(bool Success, string Message)> SuaMonHocAsync(int id, string tenMonHoc, string fieldName);
-        Task<(bool Success, string Message)> XoaMonHocAsync(int id);
+        Task<ServiceResult> ThemMonHocAsync(string tenMonHoc, string fieldName);
+        Task<ServiceResult> SuaMonHocAsync(int id, string tenMonHoc, string fieldName);
+        Task<ServiceResult> XoaMonHocAsync(int id);
     }
 }

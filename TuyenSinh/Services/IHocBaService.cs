@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Models;
-using TuyenSinh.ViewModels;
+using TuyenSinh.ViewModels.HocBa;
 
 namespace TuyenSinh.Services
 {
@@ -14,8 +15,8 @@ namespace TuyenSinh.Services
         Task<KetQuaKiemTraDiemSan> KiemTraDiemSan(string maNganh, string fileId);
         Task<List<Nganh>> LayDanhSachNganhAsync();
         
-        Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelThieuDiemToHopAsync(string excelId);
-        Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelKetQuaDoiChieuAsync(string hocBaFileId, string nguyenVongFileId);
-        Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelKiemTraDiemSanAsync(string maNganh, string fileId);
+        Task<ServiceResult<FileDownloadDto>> XuatExcelThieuDiemToHopAsync(string excelId);
+        Task<ServiceResult<FileDownloadDto>> XuatExcelKetQuaDoiChieuAsync(string hocBaFileId, string nguyenVongFileId);
+        Task<ServiceResult<FileDownloadDto>> XuatExcelKiemTraDiemSanAsync(string maNganh, string fileId);
     }
 }

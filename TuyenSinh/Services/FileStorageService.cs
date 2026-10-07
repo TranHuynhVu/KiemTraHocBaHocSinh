@@ -1,26 +1,22 @@
 using Hangfire;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace TuyenSinh.Services
 {
-    public class FileStorageService : IFileStorageService
+    public sealed class FileStorageService(
+        IWebHostEnvironment hostingEnvironment,
+        IBackgroundJobClient backgroundJobClient,
+        ILogger<FileStorageService> logger) : IFileStorageService
     {
-        private readonly IWebHostEnvironment _hostingEnvironment;
-        private readonly IBackgroundJobClient _backgroundJobClient;
-
-        public FileStorageService(IWebHostEnvironment hostingEnvironment, IBackgroundJobClient backgroundJobClient)
-        {
-            _hostingEnvironment = hostingEnvironment;
-            _backgroundJobClient = backgroundJobClient;
-        }
 
         public string GetUploadFolder()
         {
-            var webRootPath = _hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var webRootPath = hostingEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var uploadsFolder = Path.Combine(webRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder))
             {
@@ -64,7 +60,7 @@ namespace TuyenSinh.Services
                 await file.CopyToAsync(stream);
             }
 
-            _backgroundJobClient.Schedule<IFileStorageService>(s => s.DeleteExpiredFileAsync(fileId), TimeSpan.FromMinutes(expiredMinutes));
+            backgroundJobClient.Schedule<IFileStorageService>(s => s.DeleteExpiredFileAsync(fileId), TimeSpan.FromMinutes(expiredMinutes));
 
             return fileId;
         }
@@ -80,7 +76,10 @@ namespace TuyenSinh.Services
                 {
                     File.Delete(filePath);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Không thể xóa file tạm đã hết hạn: {FilePath}", filePath);
+                }
             }
 
             await Task.CompletedTask;

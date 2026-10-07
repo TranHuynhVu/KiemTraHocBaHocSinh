@@ -8,6 +8,10 @@ using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cấu hình EPPlus License toàn cục
+OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+
 // Add Connection String & DbContext
 var connectionString = builder.Configuration.GetConnectionString("default");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -35,11 +39,18 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IMonHocService, MonHocService>();
 builder.Services.AddScoped<IToHopMonService, ToHopMonService>();
-builder.Services.AddScoped<IHocBaService, HocBaService>();
 builder.Services.AddScoped<INganhService, NganhService>();
 builder.Services.AddScoped<ISoKhopNgoaiNguService, SoKhopNgoaiNguService>();
 builder.Services.AddScoped<IQuyDoiNNService, QuyDoiNNService>();
 builder.Services.AddScoped<IDiemCongService, DiemCongService>();
+builder.Services.AddScoped<TuyenSinh.Services.Excel.IDiemCongExcelService, TuyenSinh.Services.Excel.DiemCongExcelService>();
+builder.Services.AddScoped<TuyenSinh.Services.Excel.ISoKhopExcelService, TuyenSinh.Services.Excel.SoKhopExcelService>();
+builder.Services.AddScoped<TuyenSinh.Services.Excel.IHocBaExcelService, TuyenSinh.Services.Excel.HocBaExcelService>();
+builder.Services.AddScoped<TuyenSinh.Services.HocBa.IHocBaDiemCalculator, TuyenSinh.Services.HocBa.HocBaDiemCalculator>();
+builder.Services.AddScoped<TuyenSinh.Services.HocBa.IHocBaCheckService, TuyenSinh.Services.HocBa.HocBaCheckService>();
+builder.Services.AddScoped<TuyenSinh.Services.HocBa.IHocBaDoiChieuService, TuyenSinh.Services.HocBa.HocBaDoiChieuService>();
+builder.Services.AddScoped<TuyenSinh.Services.HocBa.IHocBaDiemSanService, TuyenSinh.Services.HocBa.HocBaDiemSanService>();
+builder.Services.AddScoped<IHocBaService, HocBaService>();
 
 // Configure Hangfire Services
 builder.Services.AddHangfire(config => config

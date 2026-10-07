@@ -1,6 +1,6 @@
 using System;
 
-namespace TuyenSinh.ViewModels
+namespace TuyenSinh.ViewModels.HocBa
 {
     public class HocBaTHPTImport
     {

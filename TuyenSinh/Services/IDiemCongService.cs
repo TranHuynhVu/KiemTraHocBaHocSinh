@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Models;
 
 namespace TuyenSinh.Services
@@ -10,12 +11,12 @@ namespace TuyenSinh.Services
         Task<List<DiemCong>> LayDanhSachDiemCongAsync(int? namHoc = null, string? search = null);
         Task<List<int>> LayDanhSachNamHocAsync();
         Task<DiemCong?> LayTheoIdAsync(int id);
-        Task<(bool Success, string Message)> ThemDiemCongAsync(DiemCong model);
-        Task<(bool Success, string Message)> SuaDiemCongAsync(DiemCong model);
-        Task<(bool Success, string Message)> XoaDiemCongAsync(int id);
-        Task<(bool Success, string Message)> XoaTheoNamAsync(int namHoc);
-        Task<(bool Success, string Message, int TotalImported, int TotalSkipped)> ImportExcelAsync(IFormFile file, int namHoc, bool overwriteExisting = false);
-        Task<(bool Success, string Message, byte[]? FileContents)> XuatExcelAsync(int? namHoc = null, string? search = null);
-        Task<(bool Success, string Message, byte[]? FileContents)> TaoFileMauExcelAsync();
+        Task<ServiceResult> ThemDiemCongAsync(DiemCong model);
+        Task<ServiceResult> SuaDiemCongAsync(DiemCong model);
+        Task<ServiceResult> XoaDiemCongAsync(int id);
+        Task<ServiceResult> XoaTheoNamAsync(int namHoc);
+        Task<ServiceResult<ImportResultData>> ImportExcelAsync(IFormFile file, int namHoc, bool overwriteExisting = false);
+        Task<ServiceResult<FileDownloadDto>> XuatExcelAsync(int? namHoc = null, string? search = null);
+        Task<ServiceResult<FileDownloadDto>> TaoFileMauExcelAsync();
     }
 }

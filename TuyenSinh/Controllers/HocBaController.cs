@@ -2,28 +2,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Services;
-using OfficeOpenXml;
-using TuyenSinh.ViewModels;
-using TuyenSinh.Helpers;
+using TuyenSinh.ViewModels.HocBa;
 
 namespace TuyenSinh.Controllers
 {
     [Authorize(Roles = "Admin")]
     [Route("admin/hoc-ba")]
-    public class HocBaController : Controller
+    public class HocBaController(
+        IHocBaService hocBaService,
+        IFileStorageService fileStorageService) : Controller
     {
-        private readonly IHocBaService _hocBaService;
-        private readonly IFileStorageService _fileStorageService;
-
-        public HocBaController(IHocBaService hocBaService, IFileStorageService fileStorageService)
-        {
-            _hocBaService = hocBaService;
-            _fileStorageService = fileStorageService;
-        }
-
         [HttpGet("")]
         public IActionResult KiemTraHocBa()
         {
@@ -35,7 +27,7 @@ namespace TuyenSinh.Controllers
         {
             try
             {
-                var excelId = await _fileStorageService.LuuFileTamThoiAsync(file);
+                var excelId = await fileStorageService.LuuFileTamThoiAsync(file);
                 return Json(new
                 {
                     success = true,
@@ -53,7 +45,7 @@ namespace TuyenSinh.Controllers
         {
             if (string.IsNullOrEmpty(excelId))
             {
-                return RedirectToAction("KiemTraHocBa");
+                return RedirectToAction(nameof(KiemTraHocBa));
             }
             ViewBag.ExcelId = excelId;
             return View("Preview");
@@ -62,7 +54,7 @@ namespace TuyenSinh.Controllers
         [HttpGet("lay-du-lieu-xem-truoc")]
         public async Task<IActionResult> LayDuLieuXemTruoc(string excelId)
         {
-            var data = await _hocBaService.GetPreviewDataAsync(excelId, null);
+            var data = await hocBaService.GetPreviewDataAsync(excelId, null);
             if (data == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy dữ liệu xem trước." });
@@ -73,7 +65,7 @@ namespace TuyenSinh.Controllers
         [HttpPost("thuc-hien-kiem-tra")]
         public async Task<IActionResult> ThucHienKiemTraHocBa(string excelId)
         {
-            var result = await _hocBaService.CheckHocBaAsync(excelId);
+            var result = await hocBaService.CheckHocBaAsync(excelId);
             if (result.ThanhCong)
             {
                 return Json(new
@@ -89,12 +81,12 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel-thieu-diem")]
         public async Task<IActionResult> XuatExcelThieuDiemToHop(string excelId)
         {
-            var result = await _hocBaService.XuatExcelThieuDiemToHopAsync(excelId);
-            if (!result.Success)
+            var result = await hocBaService.XuatExcelThieuDiemToHopAsync(excelId);
+            if (!result.Success || result.Data == null)
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "ThiSinh_ThieuDiem_ToHop.xlsx");
+            return File(result.Data.Content, result.Data.ContentType, result.Data.FileName);
         }
 
         [HttpGet("doi-chieu")]
@@ -109,18 +101,18 @@ namespace TuyenSinh.Controllers
             if (fileHocBa == null || fileHocBa.Length == 0)
             {
                 TempData["Error"] = "Vui lòng chọn file học bạ.";
-                return RedirectToAction("DoiChieuHocBaNguyenVong");
+                return RedirectToAction(nameof(DoiChieuHocBaNguyenVong));
             }
             if (fileNguyenVong == null || fileNguyenVong.Length == 0)
             {
                 TempData["Error"] = "Vui lòng chọn file nguyện vọng.";
-                return RedirectToAction("DoiChieuHocBaNguyenVong");
+                return RedirectToAction(nameof(DoiChieuHocBaNguyenVong));
             }
 
             try
             {
-                var hocBaFileId = await _fileStorageService.LuuFileTamThoiAsync(fileHocBa);
-                var nguyenVongFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNguyenVong);
+                var hocBaFileId = await fileStorageService.LuuFileTamThoiAsync(fileHocBa);
+                var nguyenVongFileId = await fileStorageService.LuuFileTamThoiAsync(fileNguyenVong);
 
                 ViewBag.HocBaFileId = hocBaFileId;
                 ViewBag.NguyenVongFileId = nguyenVongFileId;
@@ -130,7 +122,7 @@ namespace TuyenSinh.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = "Có lỗi xảy ra trong quá trình nạp tệp: " + ex.Message;
-                return RedirectToAction("DoiChieuHocBaNguyenVong");
+                return RedirectToAction(nameof(DoiChieuHocBaNguyenVong));
             }
         }
 
@@ -140,7 +132,7 @@ namespace TuyenSinh.Controllers
             if (string.IsNullOrEmpty(hocBaFileId) || string.IsNullOrEmpty(nguyenVongFileId))
                 return Json(new { success = false, message = "Yêu cầu không hợp lệ." });
 
-            var result = await _hocBaService.DoiChieuHocBaVaNguyenVongAsync(hocBaFileId, nguyenVongFileId);
+            var result = await hocBaService.DoiChieuHocBaVaNguyenVongAsync(hocBaFileId, nguyenVongFileId);
 
             return Json(new
             {
@@ -157,18 +149,18 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel-ket-qua-doi-chieu")]
         public async Task<IActionResult> XuatExcelKetQuaDoiChieu(string hocBaFileId, string nguyenVongFileId)
         {
-            var result = await _hocBaService.XuatExcelKetQuaDoiChieuAsync(hocBaFileId, nguyenVongFileId);
-            if (!result.Success)
+            var result = await hocBaService.XuatExcelKetQuaDoiChieuAsync(hocBaFileId, nguyenVongFileId);
+            if (!result.Success || result.Data == null)
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "DoiChieu_HocBa_NguyenVong.xlsx");
+            return File(result.Data.Content, result.Data.ContentType, result.Data.FileName);
         }
 
         [HttpGet("kiem-tra-diem-san")]
         public async Task<IActionResult> KiemTraDiemSan()
         {
-            var dsNganh = await _hocBaService.LayDanhSachNganhAsync();
+            var dsNganh = await hocBaService.LayDanhSachNganhAsync();
             ViewBag.DanhSachNganh = dsNganh;
             return View("KiemTraDiemSan");
         }
@@ -179,16 +171,16 @@ namespace TuyenSinh.Controllers
             if (file == null || file.Length == 0)
             {
                 TempData["Error"] = "Vui lòng chọn file kiểm tra điểm sàn.";
-                return RedirectToAction("KiemTraDiemSan");
+                return RedirectToAction(nameof(KiemTraDiemSan));
             }
 
             try
             {
-                var fileId = await _fileStorageService.LuuFileTamThoiAsync(file);
+                var fileId = await fileStorageService.LuuFileTamThoiAsync(file);
                 ViewBag.FileId = fileId;
                 ViewBag.MaNganh = maNganh ?? "";
-                
-                var dsNganh = await _hocBaService.LayDanhSachNganhAsync();
+
+                var dsNganh = await hocBaService.LayDanhSachNganhAsync();
                 var nganhChon = dsNganh.FirstOrDefault(n => n.MaNganh == maNganh);
                 ViewBag.TenNganh = nganhChon != null ? nganhChon.TenNganh : "Tất cả các ngành";
 
@@ -197,7 +189,7 @@ namespace TuyenSinh.Controllers
             catch (Exception ex)
             {
                 TempData["Error"] = "Có lỗi xảy ra khi nạp file: " + ex.Message;
-                return RedirectToAction("KiemTraDiemSan");
+                return RedirectToAction(nameof(KiemTraDiemSan));
             }
         }
 
@@ -209,7 +201,7 @@ namespace TuyenSinh.Controllers
                 return Json(new { success = false, message = "Yêu cầu không hợp lệ." });
             }
 
-            var result = await _hocBaService.KiemTraDiemSan(maNganh, fileId);
+            var result = await hocBaService.KiemTraDiemSan(maNganh, fileId);
 
             return Json(new
             {
@@ -225,12 +217,12 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel-kiem-tra-diem-san")]
         public async Task<IActionResult> XuatExcelKiemTraDiemSan(string maNganh, string fileId)
         {
-            var result = await _hocBaService.XuatExcelKiemTraDiemSanAsync(maNganh, fileId);
-            if (!result.Success)
+            var result = await hocBaService.XuatExcelKiemTraDiemSanAsync(maNganh, fileId);
+            if (!result.Success || result.Data == null)
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents!, ExcelHelper.ExcelMimeType, "KetQua_KiemTra_DiemSan.xlsx");
+            return File(result.Data.Content, result.Data.ContentType, result.Data.FileName);
         }
     }
 }

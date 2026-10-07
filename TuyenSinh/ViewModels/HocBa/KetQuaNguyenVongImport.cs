@@ -1,9 +1,11 @@
-﻿namespace TuyenSinh.ViewModels
+using System;
+
+namespace TuyenSinh.ViewModels.HocBa
 {
     public class KetQuaNguyenVongImport
     {
-        public string HoTen { get; set; }
-        public string CCCD { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public string CCCD { get; set; } = string.Empty;
         public DateTime NgaySinh { get; set; }
         public int NamTN { get; set; }
         public string? DTUT { get; set; }

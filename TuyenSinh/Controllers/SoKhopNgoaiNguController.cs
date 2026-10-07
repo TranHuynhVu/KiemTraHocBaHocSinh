@@ -3,24 +3,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Services;
-using TuyenSinh.ViewModels;
+using TuyenSinh.ViewModels.SoKhopNgoaiNgu;
 
 namespace TuyenSinh.Controllers
 {
     [Authorize(Roles = "Admin")]
     [Route("admin/so-khop-ngoai-ngu")]
-    public class SoKhopNgoaiNguController : Controller
+    public class SoKhopNgoaiNguController(
+        ISoKhopNgoaiNguService soKhopNgoaiNguService,
+        IFileStorageService fileStorageService) : Controller
     {
-        private readonly ISoKhopNgoaiNguService _soKhopNgoaiNguService;
-        private readonly IFileStorageService _fileStorageService;
-
-        public SoKhopNgoaiNguController(ISoKhopNgoaiNguService soKhopNgoaiNguService, IFileStorageService fileStorageService)
-        {
-            _soKhopNgoaiNguService = soKhopNgoaiNguService;
-            _fileStorageService = fileStorageService;
-        }
-
         [HttpGet("")]
         public IActionResult Index()
         {
@@ -48,9 +42,9 @@ namespace TuyenSinh.Controllers
 
             try
             {
-                var nvFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNV);
-                var dstsFileId = await _fileStorageService.LuuFileTamThoiAsync(fileDSTS);
-                var nnFileId = await _fileStorageService.LuuFileTamThoiAsync(fileNN);
+                var nvFileId = await fileStorageService.LuuFileTamThoiAsync(fileNV);
+                var dstsFileId = await fileStorageService.LuuFileTamThoiAsync(fileDSTS);
+                var nnFileId = await fileStorageService.LuuFileTamThoiAsync(fileNN);
 
                 ViewBag.NvFileId = nvFileId;
                 ViewBag.DstsFileId = dstsFileId;
@@ -75,7 +69,7 @@ namespace TuyenSinh.Controllers
 
             try
             {
-                var data = await _soKhopNgoaiNguService.Join3ExcelFilesAsync(nvFileId, dstsFileId, nnFileId, search);
+                var data = await soKhopNgoaiNguService.Join3ExcelFilesAsync(nvFileId, dstsFileId, nnFileId, search);
                 return Json(new
                 {
                     success = true,
@@ -95,12 +89,12 @@ namespace TuyenSinh.Controllers
         [HttpGet("xuat-excel")]
         public async Task<IActionResult> XuatExcel(string nvFileId, string dstsFileId, string nnFileId, string? search)
         {
-            var result = await _soKhopNgoaiNguService.XuatExcel3FilesAsync(nvFileId, dstsFileId, nnFileId, search);
-            if (!result.Success || result.FileContents == null)
+            var result = await soKhopNgoaiNguService.XuatExcel3FilesAsync(nvFileId, dstsFileId, nnFileId, search);
+            if (!result.Success || result.Data == null)
             {
                 return BadRequest(result.Message);
             }
-            return File(result.FileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KetQua_SoKhop_3File_DSHopLeNN_vs_DSTS_vs_NV.xlsx");
+            return File(result.Data.Content, result.Data.ContentType, result.Data.FileName);
         }
     }
 }

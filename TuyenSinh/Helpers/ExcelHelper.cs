@@ -95,6 +95,29 @@ namespace TuyenSinh.Helpers
             return DateTime.MinValue;
         }
 
+        public static DateTime? ParseDateTime(object? val)
+        {
+            if (val == null) return null;
+            if (val is DateTime dt) return dt;
+            if (val is double d)
+            {
+                try { return DateTime.FromOADate(d); } catch { return null; }
+            }
+            var s = val.ToString()?.Trim();
+            if (string.IsNullOrEmpty(s)) return null;
+
+            string[] formats = { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd", "dd-MM-yyyy", "dd/MM/yyyy HH:mm:ss" };
+            if (DateTime.TryParseExact(s, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime res))
+            {
+                return res;
+            }
+            if (DateTime.TryParse(s, out DateTime resGeneral))
+            {
+                return resGeneral;
+            }
+            return null;
+        }
+
         public static void FormatHeaderRow(ExcelWorksheet sheet, string[] headers, int row = 1)
         {
             EnsureLicenseContext();

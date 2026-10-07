@@ -2,35 +2,29 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TuyenSinh.Common;
 using TuyenSinh.Data;
 using TuyenSinh.Models;
 
 namespace TuyenSinh.Services
 {
-    public class ToHopMonService : IToHopMonService
+    public sealed class ToHopMonService(ApplicationDbContext context) : IToHopMonService
     {
-        private readonly ApplicationDbContext _context;
-
-        public ToHopMonService(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         public async Task<List<ToHopMon>> LayDanhSachToHopAsync()
         {
-            return await _context.ToHopMons.Include(t => t.MonHocs).ToListAsync();
+            return await context.ToHopMons.Include(t => t.MonHocs).AsNoTracking().ToListAsync();
         }
 
-        public async Task<(bool Success, string Message)> ThemToHopAsync(string maToHop, string tenToHop, List<int> selectedSubjectIds)
+        public async Task<ServiceResult> ThemToHopAsync(string maToHop, string tenToHop, List<int> selectedSubjectIds)
         {
             if (string.IsNullOrWhiteSpace(maToHop) || string.IsNullOrWhiteSpace(tenToHop))
             {
-                return (false, "Mã tổ hợp và Tên tổ hợp không được để trống.");
+                return ServiceResult.Fail("Mã tổ hợp và Tên tổ hợp không được để trống.");
             }
 
             if (selectedSubjectIds == null || selectedSubjectIds.Count == 0)
             {
-                return (false, "Vui lòng chọn ít nhất một môn học cho tổ hợp này.");
+                return ServiceResult.Fail("Vui lòng chọn ít nhất một môn học cho tổ hợp này.");
             }
 
             var toHopMon = new ToHopMon
@@ -39,61 +33,61 @@ namespace TuyenSinh.Services
                 TenToHop = tenToHop.Trim()
             };
 
-            var subjects = await _context.MonHocs.Where(m => selectedSubjectIds.Contains(m.Id)).ToListAsync();
+            var subjects = await context.MonHocs.Where(m => selectedSubjectIds.Contains(m.Id)).ToListAsync();
             foreach (var subject in subjects)
             {
                 toHopMon.MonHocs.Add(subject);
             }
 
-            _context.ToHopMons.Add(toHopMon);
-            await _context.SaveChangesAsync();
-            return (true, "Thêm tổ hợp môn thành công.");
+            context.ToHopMons.Add(toHopMon);
+            await context.SaveChangesAsync();
+            return ServiceResult.Ok("Thêm tổ hợp môn thành công.");
         }
 
-        public async Task<(bool Success, string Message)> SuaToHopAsync(int id, string maToHop, string tenToHop, List<int> selectedSubjectIds)
+        public async Task<ServiceResult> SuaToHopAsync(int id, string maToHop, string tenToHop, List<int> selectedSubjectIds)
         {
-            var toHopMon = await _context.ToHopMons.Include(t => t.MonHocs).FirstOrDefaultAsync(t => t.Id == id);
+            var toHopMon = await context.ToHopMons.Include(t => t.MonHocs).FirstOrDefaultAsync(t => t.Id == id);
             if (toHopMon == null)
             {
-                return (false, "Không tìm thấy tổ hợp môn.");
+                return ServiceResult.Fail("Không tìm thấy tổ hợp môn.");
             }
 
             if (string.IsNullOrWhiteSpace(maToHop) || string.IsNullOrWhiteSpace(tenToHop))
             {
-                return (false, "Mã tổ hợp và Tên tổ hợp không được để trống.");
+                return ServiceResult.Fail("Mã tổ hợp và Tên tổ hợp không được để trống.");
             }
 
             if (selectedSubjectIds == null || selectedSubjectIds.Count == 0)
             {
-                return (false, "Vui lòng chọn ít nhất một môn học cho tổ hợp này.");
+                return ServiceResult.Fail("Vui lòng chọn ít nhất một môn học cho tổ hợp này.");
             }
 
             toHopMon.MaToHop = maToHop.Trim().ToUpper();
             toHopMon.TenToHop = tenToHop.Trim();
 
             toHopMon.MonHocs.Clear();
-            var subjects = await _context.MonHocs.Where(m => selectedSubjectIds.Contains(m.Id)).ToListAsync();
+            var subjects = await context.MonHocs.Where(m => selectedSubjectIds.Contains(m.Id)).ToListAsync();
             foreach (var subject in subjects)
             {
                 toHopMon.MonHocs.Add(subject);
             }
 
-            _context.Update(toHopMon);
-            await _context.SaveChangesAsync();
-            return (true, "Cập nhật tổ hợp môn thành công.");
+            context.Update(toHopMon);
+            await context.SaveChangesAsync();
+            return ServiceResult.Ok("Cập nhật tổ hợp môn thành công.");
         }
 
-        public async Task<(bool Success, string Message)> XoaToHopAsync(int id)
+        public async Task<ServiceResult> XoaToHopAsync(int id)
         {
-            var toHopMon = await _context.ToHopMons.FindAsync(id);
+            var toHopMon = await context.ToHopMons.FindAsync(id);
             if (toHopMon == null)
             {
-                return (false, "Không tìm thấy tổ hợp môn.");
+                return ServiceResult.Fail("Không tìm thấy tổ hợp môn.");
             }
 
-            _context.ToHopMons.Remove(toHopMon);
-            await _context.SaveChangesAsync();
-            return (true, "Xóa tổ hợp môn thành công.");
+            context.ToHopMons.Remove(toHopMon);
+            await context.SaveChangesAsync();
+            return ServiceResult.Ok("Xóa tổ hợp môn thành công.");
         }
     }
 }
